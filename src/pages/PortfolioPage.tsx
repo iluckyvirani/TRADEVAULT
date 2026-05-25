@@ -1,5 +1,5 @@
 import { PieChart as PieIcon, TrendingUp, TrendingDown, DollarSign, BarChart2 } from 'lucide-react'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { usePortfolioStore } from '@/store/portfolioStore'
 import { cn } from '@/lib/utils'
 
