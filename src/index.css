@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* TradeVault Dark Theme — CSS variables for shadcn/ui */
+    --background: 215 28% 9%;       /* #0F172A */
+    --foreground: 214 32% 91%;      /* #E2E8F0 */
+
+    --card: 215 25% 15%;            /* #1E293B */
+    --card-foreground: 214 32% 91%;
+
+    --popover: 215 25% 15%;
+    --popover-foreground: 214 32% 91%;
+
+    --primary: 239 84% 67%;         /* #6366F1 indigo */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 20% 25%;       /* #334155 */
+    --secondary-foreground: 214 32% 91%;
+
+    --muted: 215 20% 25%;
+    --muted-foreground: 215 16% 60%; /* #94A3B8 */
+
+    --accent: 160 84% 39%;          /* #10B981 green */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;       /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 20% 22%;
+    --input: 215 20% 22%;
+    --ring: 239 84% 67%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  #root {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@layer utilities {
+  .hero-gradient {
+    background:
+      radial-gradient(ellipse at 15% 50%, rgba(99, 102, 241, 0.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 20%, rgba(16, 185, 129, 0.10) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 90%, rgba(99, 102, 241, 0.10) 0%, transparent 50%);
+  }
+}
+
+/* ── cmdk command palette styles ── */
+[cmdk-group-heading] {
+  @apply px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+}
+[cmdk-item] {
+  @apply flex cursor-pointer select-none items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-foreground transition-colors;
+}
+[cmdk-item][aria-selected='true'],
+[cmdk-item]:hover {
+  @apply bg-primary/10 text-primary;
+}
+[cmdk-item][aria-disabled='true'] {
+  @apply pointer-events-none opacity-50;
+}
+[cmdk-separator] {
+  @apply my-1.5 h-px bg-border;
+}
+[cmdk-input] {
+  @apply flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none;
+}
