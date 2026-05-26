@@ -118,7 +118,7 @@ export default function OnboardingPage() {
       <header className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-2xl items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          <span className="font-bold text-foreground">TradeVault</span>
+          <span className="font-bold text-foreground">tradeox</span>
         </div>
       </header>
 

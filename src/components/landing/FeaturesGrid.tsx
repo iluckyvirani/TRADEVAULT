@@ -72,7 +72,7 @@ export default function FeaturesGrid() {
             Everything a real trader needs
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            TradeVault gives you a full brokerage experience — charts, analytics,
+            tradeox gives you a full brokerage experience — charts, analytics,
             orders, and social features — without risking a cent.
           </p>
         </div>

@@ -1,4 +1,4 @@
-# TradeVault — Paper Trading Platform
+# tradeox — Paper Trading Platform
 ## Project Documentation v1.0 | May 2026
 
 > **Stack Note:** This project uses **Neon PostgreSQL** (not Supabase).  
@@ -26,8 +26,8 @@
 
 ## 1. Project Overview
 
-### What is TradeVault?
-TradeVault is a zero-risk, real-data **paper trading web application** built with React + Vite. It mirrors the full workflow of a professional brokerage platform — live market quotes, portfolio analytics, watchlists, order management, and P&L reporting — while executing all trades in a virtual, simulated environment. No real money is ever at risk.
+### What is tradeox?
+tradeox is a zero-risk, real-data **paper trading web application** built with React + Vite. It mirrors the full workflow of a professional brokerage platform — live market quotes, portfolio analytics, watchlists, order management, and P&L reporting — while executing all trades in a virtual, simulated environment. No real money is ever at risk.
 
 **Target audiences:**
 - Beginners learning market mechanics
@@ -119,7 +119,7 @@ The landing page communicates value in 3 seconds, builds trust, and routes visit
 | Property | Value |
 |---|---|
 | Height | 64 px, fixed, backdrop-blur glass morphism |
-| Left | TradeVault SVG logo + wordmark |
+| Left | tradeox SVG logo + wordmark |
 | Center | Markets • Features • Pricing • Blog (hidden on mobile) |
 | Right | Log In (ghost button) + Start Free (accent filled button) |
 | Scroll behavior | Transparent → solid dark on scroll (300 ms transition) |
@@ -175,7 +175,7 @@ The landing page communicates value in 3 seconds, builds trust, and routes visit
 | Col 2 | Product: Features, Pricing, Changelog, Roadmap |
 | Col 3 | Company: About, Blog, Careers, Press |
 | Col 4 | Legal: Privacy Policy, Terms, Cookie Settings |
-| Bottom bar | © 2026 TradeVault Inc. • Not financial advice. • Paper trading only. |
+| Bottom bar | © 2026 tradeox Inc. • Not financial advice. • Paper trading only. |
 
 ---
 
@@ -593,7 +593,7 @@ backend/                           # Separate repo or monorepo package
 
 ## 12. Competitive Analysis
 
-| App | Strengths | Weaknesses | TradeVault Advantage |
+| App | Strengths | Weaknesses | tradeox Advantage |
 |---|---|---|---|
 | Robinhood | Beautiful UX | No paper trading, US-only | Risk-free + global access |
 | Webull | Paper trading, advanced charts | Cluttered UI, complex onboarding | Cleaner UI, faster onboarding |
@@ -614,7 +614,7 @@ backend/                           # Separate repo or monorepo package
 | Sector heatmap | Finviz | D3-powered SVG treemap |
 
 ### Compliance Notes
-> TradeVault is a paper trading simulation. All trades are virtual. No real securities transactions occur.  
+> tradeox is a paper trading simulation. All trades are virtual. No real securities transactions occur.  
 > Required disclaimer on: footer, every order confirmation, onboarding.  
 > Pro subscription via Stripe (no financial instrument handling).  
 > GDPR: data deletion on account closure.
@@ -655,4 +655,4 @@ backend/                           # Separate repo or monorepo package
 
 ---
 
-*© 2026 TradeVault — Confidential. Not financial advice. All trading is simulated.*
+*© 2026 tradeox — Confidential. Not financial advice. All trading is simulated.*

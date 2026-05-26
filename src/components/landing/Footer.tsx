@@ -23,7 +23,7 @@ export default function Footer() {
           <div>
             <Link to="/" className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
               <TrendingUp className="h-5 w-5 text-primary" />
-              TradeVault
+              tradeox
             </Link>
             <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
               The professional paper trading platform. Trade smarter. Risk nothing.
@@ -64,7 +64,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
-          <p>© 2026 TradeVault Inc. All rights reserved.</p>
+          <p>© 2026 tradeox Inc. All rights reserved.</p>
           <p>Not financial advice. Paper trading only. For educational purposes.</p>
         </div>
       </div>

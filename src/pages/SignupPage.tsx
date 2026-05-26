@@ -103,7 +103,7 @@ export default function SignupPage() {
       <div className="hero-gradient relative hidden flex-col justify-between overflow-hidden border-r border-border p-12 lg:flex lg:w-5/12 xl:w-1/2">
         <Link to="/" className="flex items-center gap-2 text-xl font-bold text-foreground">
           <TrendingUp className="h-6 w-6 text-primary" />
-          TradeVault
+          tradeox
         </Link>
         <div>
           <h2 className="mb-4 text-4xl font-bold text-foreground">
@@ -125,14 +125,14 @@ export default function SignupPage() {
             ))}
           </ul>
         </div>
-        <p className="text-sm text-muted-foreground">© 2026 TradeVault Inc.</p>
+        <p className="text-sm text-muted-foreground">© 2026 tradeox Inc.</p>
       </div>
 
       {/* ── Right form panel ── */}
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         <Link to="/" className="mb-8 flex items-center gap-2 text-xl font-bold text-foreground lg:hidden">
           <TrendingUp className="h-6 w-6 text-primary" />
-          TradeVault
+          tradeox
         </Link>
 
         <div className="w-full max-w-md">

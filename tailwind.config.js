@@ -41,7 +41,7 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
-        // TradeVault custom tokens
+        // tradeox custom tokens
         surface: '#1E293B',
         'surface-2': '#334155',
         'primary-hover': '#4F46E5',

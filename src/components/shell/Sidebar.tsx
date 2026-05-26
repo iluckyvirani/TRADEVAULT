@@ -72,7 +72,7 @@ export default function Sidebar({ collapsed, mobileOpen, onClose }: Props) {
               collapsed && 'lg:hidden',
             )}
           >
-            TradeVault
+            tradeox
           </span>
         </div>
         {/* Mobile close button */}

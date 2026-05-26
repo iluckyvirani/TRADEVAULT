@@ -51,6 +51,6 @@ export const useJournalStore = create<JournalState>()(
         set((s) => ({ entries: s.entries.filter((e) => e.id !== id) }))
       },
     }),
-    { name: 'tradevault-journal' },
+    { name: 'tradeox-journal' },
   ),
 )

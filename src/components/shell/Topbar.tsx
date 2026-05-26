@@ -36,7 +36,7 @@ export default function Topbar({
   const user = useAuthStore((s) => s.user)
 
   const key = '/' + pathname.split('/')[1]
-  const title = PAGE_TITLES[key] ?? 'TradeVault'
+  const title = PAGE_TITLES[key] ?? 'tradeox'
   const emoji = AVATAR_EMOJI[user?.avatar ?? 'av1'] ?? '🦊'
 
   return (

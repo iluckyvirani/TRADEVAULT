@@ -32,7 +32,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 font-bold text-xl text-foreground">
           <TrendingUp className="h-6 w-6 text-primary" />
-          TradeVault
+          tradeox
         </Link>
 
         {/* Desktop center links */}
