@@ -78,7 +78,7 @@ function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
           <input
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
-            placeholder="AAPL"
+            placeholder="RELIANCE"
             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm font-mono font-bold uppercase text-foreground outline-none focus:border-primary"
             required
           />

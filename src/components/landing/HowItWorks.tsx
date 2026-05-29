@@ -10,8 +10,8 @@ const STEPS = [
   {
     Icon: DollarSign,
     step: '02',
-    title: 'Get $100K Virtual Cash',
-    body: 'Your portfolio is loaded instantly with $100,000 in paper money.',
+    title: 'Get ₹1,000,000 Virtual Cash',
+    body: 'Your portfolio is loaded instantly with ₹1,000,000 in paper money.',
   },
   {
     Icon: TrendingUp,

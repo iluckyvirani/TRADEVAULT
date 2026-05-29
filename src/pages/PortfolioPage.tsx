@@ -1,7 +1,7 @@
 import { PieChart as PieIcon, TrendingUp, TrendingDown, DollarSign, BarChart2 } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { usePortfolioStore } from '@/store/portfolioStore'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 const DONUT_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#EC4899']
 
@@ -18,28 +18,28 @@ export default function PortfolioPage() {
   const summaryCards = [
     {
       label: 'Total Portfolio',
-      value: `$${p.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      value: formatCurrency(p.totalValue),
       sub: `${p.totalPnLPct >= 0 ? '+' : ''}${p.totalPnLPct.toFixed(2)}% all-time`,
       positive: p.totalPnLPct >= 0,
       icon: DollarSign,
     },
     {
       label: 'Day P&L',
-      value: `${p.dayPnL >= 0 ? '+' : ''}$${p.dayPnL.toFixed(2)}`,
+      value: `${p.dayPnL >= 0 ? '+' : ''}${formatCurrency(p.dayPnL)}`,
       sub: `${p.dayPnLPct >= 0 ? '+' : ''}${p.dayPnLPct.toFixed(2)}% today`,
       positive: p.dayPnL >= 0,
       icon: p.dayPnL >= 0 ? TrendingUp : TrendingDown,
     },
     {
       label: 'Cash Available',
-      value: `$${p.cashBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      value: formatCurrency(p.cashBalance),
       sub: `${totalEquity > 0 ? ((p.cashBalance / p.totalValue) * 100).toFixed(1) : '0'}% of portfolio`,
       positive: true,
       icon: BarChart2,
     },
     {
       label: 'Unrealized P&L',
-      value: `${p.totalPnL >= 0 ? '+' : ''}$${p.totalPnL.toFixed(2)}`,
+      value: `${p.totalPnL >= 0 ? '+' : ''}${formatCurrency(p.totalPnL)}`,
       sub: 'Open positions',
       positive: p.totalPnL >= 0,
       icon: PieIcon,
@@ -102,7 +102,7 @@ export default function PortfolioPage() {
                 <Tooltip
                   contentStyle={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
                   labelStyle={{ color: '#F1F5F9' }}
-                  formatter={(value, name) => [`$${Number(value).toLocaleString()}`, String(name)]}
+                  formatter={(value, name) => [formatCurrency(Number(value)), String(name)]}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -166,13 +166,13 @@ export default function PortfolioPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3 text-right text-muted-foreground">{pos.quantity}</td>
-                    <td className="hidden px-5 py-3 text-right text-muted-foreground sm:table-cell">${pos.avgCost.toFixed(2)}</td>
-                    <td className="px-5 py-3 text-right tabular-nums text-foreground">${pos.currentPrice.toFixed(2)}</td>
+                    <td className="hidden px-5 py-3 text-right text-muted-foreground sm:table-cell">{formatCurrency(pos.avgCost)}</td>
+                    <td className="px-5 py-3 text-right tabular-nums text-foreground">{formatCurrency(pos.currentPrice)}</td>
                     <td className="hidden px-5 py-3 text-right font-medium text-foreground md:table-cell">
-                      ${pos.marketValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {formatCurrency(pos.marketValue)}
                     </td>
                     <td className={cn('px-5 py-3 text-right font-semibold tabular-nums', pos.unrealizedPnL >= 0 ? 'text-accent' : 'text-destructive')}>
-                      {pos.unrealizedPnL >= 0 ? '+' : ''}${pos.unrealizedPnL.toFixed(2)}
+                      {pos.unrealizedPnL >= 0 ? '+' : ''}{formatCurrency(pos.unrealizedPnL)}
                     </td>
                     <td className={cn('hidden px-5 py-3 text-right font-medium sm:table-cell', pos.unrealizedPnLPct >= 0 ? 'text-accent' : 'text-destructive')}>
                       {pos.unrealizedPnLPct >= 0 ? '+' : ''}{pos.unrealizedPnLPct.toFixed(2)}%
@@ -189,10 +189,10 @@ export default function PortfolioPage() {
                   <td className="hidden px-5 py-3 sm:table-cell" />
                   <td className="px-5 py-3" />
                   <td className="hidden px-5 py-3 text-right text-foreground md:table-cell">
-                    ${totalEquity.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {formatCurrency(totalEquity)}
                   </td>
                   <td className={cn('px-5 py-3 text-right font-bold', p.totalPnL >= 0 ? 'text-accent' : 'text-destructive')}>
-                    {p.totalPnL >= 0 ? '+' : ''}${p.totalPnL.toFixed(2)}
+                    {p.totalPnL >= 0 ? '+' : ''}{formatCurrency(p.totalPnL)}
                   </td>
                   <td className="hidden sm:table-cell" />
                   <td className="hidden lg:table-cell" />

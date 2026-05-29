@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { TrendingUp, Eye, EyeOff, Lock, BarChart2 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 // ─── Mock credentials (frontend-only) ────────────────────────────────────────
 const MOCK_EMAIL = 'trader@tradeox.io'
@@ -82,12 +82,12 @@ export default function LoginPage() {
         {/* Mock portfolio card */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-xl">
           <p className="mb-1 text-xs text-muted-foreground">Portfolio Value</p>
-          <p className="mb-4 text-3xl font-bold text-foreground">$102,415.80</p>
+          <p className="mb-4 text-3xl font-bold text-foreground">{formatCurrency(1845000)}</p>
           <div className="space-y-2">
             {[
-              { symbol: 'NVDA', change: '+2.55%', up: true },
-              { symbol: 'AAPL', change: '+1.29%', up: true },
-              { symbol: 'TSLA', change: '-2.34%', up: false },
+              { symbol: 'RELIANCE', change: '+0.46%', up: true },
+              { symbol: 'TCS', change: '+1.05%', up: true },
+              { symbol: 'ICICIBANK', change: '-1.20%', up: false },
             ].map((r) => (
               <div key={r.symbol} className="flex justify-between border-t border-border/50 pt-2 text-sm">
                 <span className="font-semibold text-foreground">{r.symbol}</span>

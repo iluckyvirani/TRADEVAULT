@@ -1,4 +1,5 @@
 import { mockQuotes } from '@/lib/mock'
+import { formatCurrency } from '@/lib/utils'
 
 const QUOTES = Object.values(mockQuotes)
 
@@ -20,7 +21,7 @@ export default function TickerStrip() {
                 q.changePct >= 0 ? 'font-medium text-accent' : 'font-medium text-destructive'
               }
             >
-              ${q.price.toFixed(2)}
+              {formatCurrency(q.price)}
             </span>
             <span
               className={

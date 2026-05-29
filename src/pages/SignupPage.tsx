@@ -114,9 +114,9 @@ export default function SignupPage() {
           </p>
           <ul className="space-y-3">
             {[
-              '$100,000 virtual portfolio on signup',
-              'Real-time prices via Polygon.io',
-              'Market, Limit, Stop, and trailing orders',
+              '₹1,000,000 virtual portfolio on signup',
+              'Real-time NSE prices for Indian equities',
+              'Market, Limit, Stop, and stop-limit orders',
             ].map((item) => (
               <li key={item} className="flex items-center gap-3 text-foreground/80">
                 <Check className="h-5 w-5 flex-shrink-0 text-accent" />

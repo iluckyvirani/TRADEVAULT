@@ -8,7 +8,7 @@ interface PricingRow {
 }
 
 const ROWS: PricingRow[] = [
-  { label: 'Virtual portfolio', free: '$100,000', pro: '$1,000,000' },
+  { label: 'Virtual portfolio', free: '₹1,000,000', pro: '₹5,000,000' },
   { label: 'Watchlists', free: '3', pro: 'Unlimited' },
   { label: 'Chart indicators', free: '10', pro: '50+' },
   { label: 'Trade history', free: '30 days', pro: 'Unlimited' },
@@ -54,7 +54,7 @@ export default function PricingSection() {
               Free
             </p>
             <div className="mb-6 flex items-end gap-1">
-              <span className="text-5xl font-extrabold text-foreground">$0</span>
+              <span className="text-5xl font-extrabold text-foreground">₹0</span>
               <span className="pb-1 text-muted-foreground">/month</span>
             </div>
             <Link
@@ -86,7 +86,7 @@ export default function PricingSection() {
               Pro
             </p>
             <div className="mb-6 flex items-end gap-1">
-              <span className="text-5xl font-extrabold text-foreground">$9</span>
+              <span className="text-5xl font-extrabold text-foreground">₹999</span>
               <span className="pb-1 text-muted-foreground">/month</span>
             </div>
             <Link

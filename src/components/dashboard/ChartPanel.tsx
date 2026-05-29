@@ -8,7 +8,7 @@ import {
 import type { IChartApi, UTCTimestamp } from 'lightweight-charts'
 import { mockCandles, mockQuotes } from '@/lib/mock'
 import { usePortfolioStore } from '@/store/portfolioStore'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { BarChart2, CandlestickChart, LineChart, AreaChart } from 'lucide-react'
 
 type TimeFrame = '5D' | '1M' | '3M' | '6M' | '1Y'
@@ -37,7 +37,7 @@ export function ChartPanel({ activeSymbol, onSymbolChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
 
-  const [symbol, setSymbol] = useState(activeSymbol ?? 'AAPL')
+  const [symbol, setSymbol] = useState(activeSymbol ?? 'RELIANCE')
   const [timeframe, setTimeframe] = useState<TimeFrame>('3M')
   const [chartType, setChartType] = useState<ChartType>('candlestick')
   const [showMA20, setShowMA20] = useState(true)
@@ -229,7 +229,7 @@ export function ChartPanel({ activeSymbol, onSymbolChange }: Props) {
         {/* Live price */}
         {quote && (
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-foreground">${quote.price.toFixed(2)}</span>
+            <span className="text-sm font-bold text-foreground">{formatCurrency(quote.price)}</span>
             <span className={cn('text-xs font-semibold', up ? 'text-accent' : 'text-destructive')}>
               {up ? '+' : ''}{quote.changePct.toFixed(2)}%
             </span>

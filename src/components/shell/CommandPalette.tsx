@@ -7,7 +7,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { mockQuotes } from '@/lib/mock'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 interface NavAction { icon: LucideIcon; label: string; path: string }
 
@@ -128,7 +128,7 @@ export default function CommandPalette({ open, onClose }: Props) {
                       q.changePct >= 0 ? 'text-accent' : 'text-destructive',
                     )}
                   >
-                    ${q.price.toFixed(2)}
+                    {formatCurrency(q.price)}
                   </span>
                 </Command.Item>
               ))}

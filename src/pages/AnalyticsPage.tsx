@@ -13,7 +13,7 @@ import {
 import { usePortfolioStore } from '@/store/portfolioStore'
 import { useOrdersStore } from '@/store/ordersStore'
 import { dailyReturns, calcSharpeRatio, calcMaxDrawdown, calcWinRate, calcAvgWin, calcAvgLoss } from '@/lib/calculations'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 // Generate mock P&L history (90 trading days)
 function genPnLHistory(startValue: number) {
@@ -105,10 +105,10 @@ export default function AnalyticsPage() {
           {/* P&L Summary strip */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {[
-              { label: 'Portfolio Value',  value: `$${portfolio.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}` },
-              { label: 'Unrealized P&L',  value: `${portfolio.totalPnL >= 0 ? '+' : ''}$${portfolio.totalPnL.toFixed(2)}`, color: portfolio.totalPnL >= 0 ? 'text-accent' : 'text-destructive' },
-              { label: 'Day P&L',          value: `${portfolio.dayPnL >= 0 ? '+' : ''}$${portfolio.dayPnL.toFixed(2)}`, color: portfolio.dayPnL >= 0 ? 'text-accent' : 'text-destructive' },
-              { label: 'Cash Balance',     value: `$${portfolio.cashBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` },
+              { label: 'Portfolio Value',  value: formatCurrency(portfolio.totalValue) },
+              { label: 'Unrealized P&L',  value: `${portfolio.totalPnL >= 0 ? '+' : ''}${formatCurrency(portfolio.totalPnL)}`, color: portfolio.totalPnL >= 0 ? 'text-accent' : 'text-destructive' },
+              { label: 'Day P&L',          value: `${portfolio.dayPnL >= 0 ? '+' : ''}${formatCurrency(portfolio.dayPnL)}`, color: portfolio.dayPnL >= 0 ? 'text-accent' : 'text-destructive' },
+              { label: 'Cash Balance',     value: formatCurrency(portfolio.cashBalance) },
             ].map((s) => (
               <div key={s.label} className="rounded-2xl border border-border bg-card p-5">
                 <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
                 <p className="mt-0.5 text-xs text-muted-foreground">Simulated daily portfolio value</p>
               </div>
               <span className={cn('text-sm font-bold', lastPnl >= 0 ? 'text-accent' : 'text-destructive')}>
-                {lastPnl >= 0 ? '+' : ''}${lastPnl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {lastPnl >= 0 ? '+' : ''}{formatCurrency(lastPnl)}
               </span>
             </div>
             <div className="h-[280px]">
@@ -143,13 +143,13 @@ export default function AnalyticsPage() {
                     tick={{ fill: '#64748B', fontSize: 10 }}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                    tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
                     width={46}
                   />
                   <Tooltip
                     contentStyle={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
                     labelStyle={{ color: '#94A3B8' }}
-                    formatter={(v) => [`$${Number(v).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Portfolio']}
+                    formatter={(v) => [formatCurrency(Number(v)), 'Portfolio']}
                   />
                   <ReferenceLine y={100_000} stroke="#334155" strokeDasharray="4 2" label={{ value: 'Start', fill: '#475569', fontSize: 10 }} />
                   <Area type="monotone" dataKey="value" stroke={chartColor} strokeWidth={2} fill="url(#pnlGrad)" dot={false} activeDot={{ r: 4, fill: chartColor }} />
@@ -209,7 +209,7 @@ export default function AnalyticsPage() {
                       </td>
                       <td className="px-5 py-3 text-right text-muted-foreground">{o.quantity}</td>
                       <td className="px-5 py-3 text-right font-medium text-foreground">
-                        ${o.filledPrice?.toFixed(2) ?? '—'}
+                        {o.filledPrice !== undefined ? formatCurrency(o.filledPrice) : '—'}
                       </td>
                       <td className="px-5 py-3 capitalize text-muted-foreground">{o.type}</td>
                       <td className="px-5 py-3 text-right text-muted-foreground">

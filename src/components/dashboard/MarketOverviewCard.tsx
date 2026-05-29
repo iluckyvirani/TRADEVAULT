@@ -1,16 +1,16 @@
 import { usePortfolioStore } from '@/store/portfolioStore'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { Globe } from 'lucide-react'
 
 const INDICES = [
-  { symbol: 'SPY',  label: 'S&P 500'  },
-  { symbol: 'QQQ',  label: 'NASDAQ'   },
+  { symbol: 'NIFTY', label: 'NIFTY 50' },
+  { symbol: 'BANKNIFTY', label: 'BANKNIFTY' },
 ]
 
 const MOCK_INDICES = [
-  { label: 'DOW',        price: 39_180.23, changePct:  0.42 },
-  { label: 'RUSSELL',   price:  2_048.55, changePct: -0.18 },
-  { label: 'VIX',       price:    13.82,  changePct:  2.11 },
+  { label: 'NSE 100', price: 28450.80, changePct: 0.57 },
+  { label: 'India VIX', price: 14.32, changePct: -1.25 },
+  { label: 'NSE Mid Cap', price: 18920.65, changePct: 0.82 },
 ]
 
 const SECTORS = [
@@ -55,7 +55,7 @@ export function MarketOverviewCard() {
                   <span className="text-muted-foreground">{label}</span>
                   <div className="flex items-center gap-3">
                     <span className="font-mono font-medium text-foreground">
-                      ${q.price.toFixed(2)}
+                      {formatCurrency(q.price)}
                     </span>
                     <span
                       className={cn(
@@ -77,7 +77,7 @@ export function MarketOverviewCard() {
                   <span className="text-muted-foreground">{idx.label}</span>
                   <div className="flex items-center gap-3">
                     <span className="font-mono font-medium text-foreground">
-                      {idx.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {idx.label === 'India VIX' ? idx.price.toFixed(2) : formatCurrency(idx.price)}
                     </span>
                     <span
                       className={cn(

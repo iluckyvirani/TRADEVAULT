@@ -17,10 +17,10 @@ const AVATARS = [
 ]
 
 const BALANCE_OPTIONS = [
-  { label: '$10K',  value: 10_000 },
-  { label: '$50K',  value: 50_000 },
-  { label: '$100K', value: 100_000 },
-  { label: '$500K', value: 500_000 },
+  { label: '₹10K',  value: 10_000 },
+  { label: '₹50K',  value: 50_000 },
+  { label: '₹100K', value: 100_000 },
+  { label: '₹500K', value: 500_000 },
 ]
 
 const TRADING_STYLES = [
@@ -32,13 +32,12 @@ const TRADING_STYLES = [
 
 const EXPERIENCE_LEVELS = ['Beginner', 'Intermediate', 'Advanced']
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
+const CURRENCIES = ['INR']
 
 const SEED_SYMBOLS = [
-  'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'TSLA', 'BRK.B',
-  'JPM', 'V', 'JNJ', 'UNH', 'XOM', 'WMT', 'COST',
-  'SPY', 'QQQ', 'VTI', 'GLD', 'TLT',
-  'PLTR', 'SOFI', 'RBLX', 'COIN', 'DKNG',
+  'RELIANCE', 'HDFCBANK', 'INFY', 'TCS', 'ICICIBANK', 'SBI',
+  'BHARTIARTL', 'AXISBANK', 'NIFTY', 'BANKNIFTY', 'LT', 'SUNPHARMA',
+  'MARUTI', 'ITC', 'POWERGRID', 'BAJAJFINANCE', 'M&M', 'DRREDDY',
 ]
 
 const STEP_LABELS = ['Your Profile', 'Portfolio Setup', 'Seed Watchlist']
@@ -60,7 +59,7 @@ export default function OnboardingPage() {
   // Step 1 state
   const [displayName, setDisplayName] = useState(user?.name ?? '')
   const [avatar, setAvatar] = useState('av1')
-  const [currency, setCurrency] = useState('USD')
+  const [currency, setCurrency] = useState('INR')
   const [nameErr, setNameErr] = useState('')
 
   // Step 2 state

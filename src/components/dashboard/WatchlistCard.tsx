@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { usePortfolioStore } from '@/store/portfolioStore'
 import { mockWatchlists } from '@/lib/mock'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { Bookmark, TrendingUp, TrendingDown, ShoppingCart } from 'lucide-react'
 
 interface Props {
@@ -69,7 +69,7 @@ export function WatchlistCard({ onSymbolClick, activeSymbol }: Props) {
                   direction === 'flat' && 'text-foreground',
                 )}
               >
-                ${q.price.toFixed(2)}
+                {formatCurrency(q.price)}
               </span>
 
               {/* Change % badge */}

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { TrendingUp, LogOut, Rocket } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { formatCurrency } from '@/lib/utils'
 
 export default function DashboardPlaceholder() {
   const navigate = useNavigate()
@@ -56,12 +57,12 @@ export default function DashboardPlaceholder() {
           <div>
             <p className="text-xs text-muted-foreground">Portfolio</p>
             <p className="mt-1 font-bold text-foreground">
-              ${(user?.startingBalance ?? 100_000).toLocaleString()}
+              {formatCurrency(user?.startingBalance ?? 100_000)}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Currency</p>
-            <p className="mt-1 font-bold text-foreground">{user?.currency ?? 'USD'}</p>
+            <p className="mt-1 font-bold text-foreground">{user?.currency ?? 'INR'}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Status</p>

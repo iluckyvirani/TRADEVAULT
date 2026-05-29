@@ -1,6 +1,6 @@
 import { usePortfolioStore } from '@/store/portfolioStore'
 import { mockCandles } from '@/lib/mock'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { TrendingUp, TrendingDown, DollarSign, Activity } from 'lucide-react'
 
 /** Tiny SVG sparkline from an array of close prices */
@@ -36,22 +36,21 @@ function Sparkline({ closes, up }: { closes: number[]; up: boolean }) {
 export function PortfolioSummaryCard() {
   const portfolio = usePortfolioStore((s) => s.portfolio)
 
-  // 7-day sparkline from AAPL candles as proxy for portfolio
-  const aaplCandles = mockCandles['AAPL'] ?? []
-  const last7 = aaplCandles.slice(-7).map((c) => c.close)
+  const relianceCandles = mockCandles['RELIANCE'] ?? []
+  const last7 = relianceCandles.slice(-7).map((c) => c.close)
 
   const stats = [
     {
       label: 'Total Portfolio',
-      value: `$${portfolio.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-      sub: `${portfolio.totalPnL >= 0 ? '+' : ''}$${portfolio.totalPnL.toFixed(2)} (${portfolio.totalPnLPct >= 0 ? '+' : ''}${portfolio.totalPnLPct.toFixed(2)}%)`,
+      value: formatCurrency(portfolio.totalValue),
+      sub: `${portfolio.totalPnL >= 0 ? '+' : ''}${formatCurrency(portfolio.totalPnL)} (${portfolio.totalPnLPct >= 0 ? '+' : ''}${portfolio.totalPnLPct.toFixed(2)}%)`,
       up: portfolio.totalPnL >= 0,
       icon: DollarSign,
       spark: true,
     },
     {
       label: 'Day P&L',
-      value: `${portfolio.dayPnL >= 0 ? '+' : ''}$${portfolio.dayPnL.toFixed(2)}`,
+      value: `${portfolio.dayPnL >= 0 ? '+' : ''}${formatCurrency(portfolio.dayPnL)}`,
       sub: `${portfolio.dayPnLPct >= 0 ? '+' : ''}${portfolio.dayPnLPct.toFixed(2)}% today`,
       up: portfolio.dayPnL >= 0,
       icon: Activity,
@@ -59,7 +58,7 @@ export function PortfolioSummaryCard() {
     },
     {
       label: 'Cash Available',
-      value: `$${portfolio.cashBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      value: formatCurrency(portfolio.cashBalance),
       sub: `${((portfolio.cashBalance / portfolio.totalValue) * 100).toFixed(1)}% of portfolio`,
       up: true,
       icon: TrendingUp,

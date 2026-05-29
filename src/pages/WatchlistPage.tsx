@@ -1,6 +1,6 @@
 import { Bookmark, Plus, TrendingUp } from 'lucide-react'
 import { mockWatchlists, mockQuotes } from '@/lib/mock'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 export default function WatchlistPage() {
   const [activeList] = [mockWatchlists[0]]
@@ -57,13 +57,13 @@ export default function WatchlistPage() {
                 <TrendingUp className={cn('h-4 w-4', up ? 'text-accent' : 'text-destructive rotate-180')} />
               </div>
               <div className="mt-3 flex items-end justify-between">
-                <p className="text-xl font-bold text-foreground">${q.price.toFixed(2)}</p>
+                <p className="text-xl font-bold text-foreground">{formatCurrency(q.price)}</p>
                 <div className="text-right">
                   <p className={cn('text-sm font-semibold', up ? 'text-accent' : 'text-destructive')}>
                     {up ? '+' : ''}{q.changePct.toFixed(2)}%
                   </p>
                   <p className={cn('text-xs', up ? 'text-accent/70' : 'text-destructive/70')}>
-                    {up ? '+' : ''}${q.change.toFixed(2)}
+                    {up ? '+' : ''}{formatCurrency(q.change)}
                   </p>
                 </div>
               </div>

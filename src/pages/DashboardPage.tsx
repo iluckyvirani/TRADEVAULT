@@ -7,14 +7,14 @@ import { OrderEntryPanel } from '@/components/dashboard/OrderEntryPanel'
 import { WatchlistCard } from '@/components/dashboard/WatchlistCard'
 import { PortfolioSummaryCard } from '@/components/dashboard/PortfolioSummaryCard'
 import { MarketOverviewCard } from '@/components/dashboard/MarketOverviewCard'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
 
 export default function DashboardPage() {
   // Start mock price simulation
   useMockTicker(1500)
 
-  const [activeSymbol, setActiveSymbol] = useState('AAPL')
+  const [activeSymbol, setActiveSymbol] = useState('RELIANCE')
   const portfolio = usePortfolioStore((s) => s.portfolio)
   const orders = useOrdersStore((s) => s.orders)
   const cancelOrder = useOrdersStore((s) => s.cancelOrder)
@@ -75,13 +75,13 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-4 py-2.5 text-right text-muted-foreground">{pos.quantity}</td>
                     <td className="px-4 py-2.5 text-right text-muted-foreground">
-                      ${pos.avgCost.toFixed(2)}
+                      {formatCurrency(pos.avgCost)}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-foreground">
-                      ${pos.currentPrice.toFixed(2)}
+                      {formatCurrency(pos.currentPrice)}
                     </td>
                     <td className="px-4 py-2.5 text-right font-medium text-foreground">
-                      ${pos.marketValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {formatCurrency(pos.marketValue)}
                     </td>
                     <td
                       className={cn(
@@ -89,7 +89,7 @@ export default function DashboardPage() {
                         pos.unrealizedPnL >= 0 ? 'text-accent' : 'text-destructive',
                       )}
                     >
-                      {pos.unrealizedPnL >= 0 ? '+' : ''}${pos.unrealizedPnL.toFixed(2)}
+                      {pos.unrealizedPnL >= 0 ? '+' : ''}{formatCurrency(pos.unrealizedPnL)}
                       <span className="ml-1 text-[10px] opacity-70">
                         ({pos.unrealizedPnLPct >= 0 ? '+' : ''}{pos.unrealizedPnLPct.toFixed(1)}%)
                       </span>

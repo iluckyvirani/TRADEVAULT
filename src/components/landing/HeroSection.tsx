@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { Play, Check } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
-const TRUST = ['No credit card required', 'Free forever', 'Real market data']
+const TRUST = ['No credit card required', 'Free forever', 'Live Indian market data']
 
 const STATS = [
   { value: '50,000+', label: 'Active traders' },
-  { value: '$2.4B', label: 'Virtual volume' },
+  { value: '₹2.4B', label: 'Virtual volume' },
   { value: '98.7%', label: 'Uptime SLA' },
-  { value: '$0', label: 'Real money at risk' },
+  { value: '₹0', label: 'Real money at risk' },
 ]
 
 export default function HeroSection() {
@@ -49,9 +50,9 @@ export default function HeroSection() {
           </h1>
 
           <p className="mb-8 max-w-lg text-lg text-muted-foreground lg:text-xl">
-            Trade stocks with{' '}
-            <span className="font-semibold text-foreground">$100,000 virtual cash</span>.
-            Real prices. Real strategies. Zero risk.
+            Trade Indian equities with{' '}
+            <span className="font-semibold text-foreground">₹1,000,000 virtual cash</span>.
+            Real-time NSE prices. Real strategies. Zero risk.
           </p>
 
           {/* CTAs */}
@@ -116,11 +117,11 @@ function MockDashboard() {
       <div className="mb-4 flex items-start justify-between">
         <div>
           <p className="text-xs text-muted-foreground">Portfolio Value</p>
-          <p className="text-2xl font-bold text-foreground">$102,415.80</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">+$2,415.80 all time</p>
+          <p className="text-2xl font-bold text-foreground">{formatCurrency(1845000)}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">+₹325,000.00 all time</p>
         </div>
         <span className="flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-sm font-semibold text-accent">
-          ▲ 2.41%
+          ▲ 21.38%
         </span>
       </div>
 
@@ -149,9 +150,9 @@ function MockDashboard() {
       {/* Positions */}
       <div className="space-y-0">
         {[
-          { symbol: 'AAPL', qty: '15 shares', price: '$192.35', pnl: '+$207.75', up: true },
-          { symbol: 'NVDA', qty: '5 shares', price: '$905.40', pnl: '+$427.00', up: true },
-          { symbol: 'TSLA', qty: '8 shares', price: '$221.15', pnl: '-$190.80', up: false },
+          { symbol: 'RELIANCE', qty: '40 shares', price: '₹2,925.60', pnl: '+₹74,024.00', up: true },
+          { symbol: 'TCS', qty: '32 shares', price: '₹3,905.90', pnl: '+₹59,389.00', up: true },
+          { symbol: 'ICICIBANK', qty: '110 shares', price: '₹1,246.70', pnl: '-₹31,070.00', up: false },
         ].map(item => (
           <div
             key={item.symbol}

@@ -3,7 +3,7 @@ import { usePortfolioStore } from '@/store/portfolioStore'
 import { useOrdersStore } from '@/store/ordersStore'
 import { mockQuotes } from '@/lib/mock'
 import type { OrderType, OrderTimeInForce } from '@/lib/mock'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { AlertTriangle, CheckCircle, X } from 'lucide-react'
 
 const SYMBOLS = Object.keys(mockQuotes)
@@ -14,7 +14,7 @@ interface Props {
 
 type Confirm = { show: true; summary: string } | { show: false }
 
-export function OrderEntryPanel({ defaultSymbol = 'AAPL' }: Props) {
+export function OrderEntryPanel({ defaultSymbol = 'RELIANCE' }: Props) {
   const [symbol, setSymbol] = useState(defaultSymbol)
   const [side, setSide] = useState<'buy' | 'sell'>('buy')
   const [orderType, setOrderType] = useState<OrderType>('market')
@@ -53,13 +53,13 @@ export function OrderEntryPanel({ defaultSymbol = 'AAPL' }: Props) {
     const summaryParts = [
       `${side.toUpperCase()} ${quantity} ${symbol}`,
       orderType === 'market'
-        ? `@ Market (~$${currentPrice.toFixed(2)})`
+        ? `@ Market (~${formatCurrency(currentPrice)})`
         : orderType === 'limit'
-          ? `@ Limit $${lp?.toFixed(2)}`
+          ? `@ Limit ${formatCurrency(lp ?? currentPrice)}`
           : orderType === 'stop'
-            ? `@ Stop $${sp?.toFixed(2)}`
-            : `@ Stop $${sp?.toFixed(2)} / Limit $${lp?.toFixed(2)}`,
-      `• Est. ${side === 'buy' ? 'Cost' : 'Proceeds'}: $${estTotal.toLocaleString()}`,
+            ? `@ Stop ${formatCurrency(sp ?? currentPrice)}`
+            : `@ Stop ${formatCurrency(sp ?? currentPrice)} / Limit ${formatCurrency(lp ?? currentPrice)}`,
+      `• Est. ${side === 'buy' ? 'Cost' : 'Proceeds'}: ${formatCurrency(estTotal)}`,
     ]
     setConfirm({ show: true, summary: summaryParts.join(' ') })
   }
@@ -85,7 +85,7 @@ export function OrderEntryPanel({ defaultSymbol = 'AAPL' }: Props) {
     setToast({
       msg:
         order.status === 'filled'
-          ? `Order filled: ${side.toUpperCase()} ${quantity} ${symbol} @ $${order.filledPrice?.toFixed(2)}`
+          ? `Order filled: ${side.toUpperCase()} ${quantity} ${symbol} @ ${formatCurrency(order.filledPrice ?? currentPrice)}`
           : `Order placed: ${side.toUpperCase()} ${quantity} ${symbol} (${order.status})`,
       ok: true,
     })
@@ -106,7 +106,7 @@ export function OrderEntryPanel({ defaultSymbol = 'AAPL' }: Props) {
         <p className="mt-0.5 text-xs text-muted-foreground">
           Cash available:{' '}
           <span className="font-medium text-accent">
-            ${portfolio.cashBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            {formatCurrency(portfolio.cashBalance)}
           </span>
         </p>
       </div>
@@ -148,7 +148,7 @@ export function OrderEntryPanel({ defaultSymbol = 'AAPL' }: Props) {
           >
             {SYMBOLS.map((s) => (
               <option key={s} value={s}>
-                {s} — ${liveQuotes[s]?.price.toFixed(2) ?? '—'}
+                {s} — {liveQuotes[s] ? formatCurrency(liveQuotes[s].price) : '—'}
               </option>
             ))}
           </select>
@@ -243,7 +243,7 @@ export function OrderEntryPanel({ defaultSymbol = 'AAPL' }: Props) {
             <span className="text-muted-foreground">
               Est. {side === 'buy' ? 'Cost' : 'Proceeds'}
             </span>
-            <span className="font-bold text-foreground">${estTotal.toLocaleString()}</span>
+            <span className="font-bold text-foreground">{formatCurrency(estTotal)}</span>
           </div>
           {orderType === 'market' && (
             <p className="mt-0.5 text-[10px] text-muted-foreground/70">

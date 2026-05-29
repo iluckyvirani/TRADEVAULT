@@ -8,7 +8,7 @@ import { useOrdersStore } from '@/store/ordersStore'
 import { ChartPanel } from '@/components/dashboard/ChartPanel'
 import { OrderEntryPanel } from '@/components/dashboard/OrderEntryPanel'
 import { RiskWarningBanner } from '@/components/trading/RiskWarningBanner'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import type { OrderStatus } from '@/lib/mock'
 
 type OrderTab = 'open' | 'filled' | 'all'
@@ -24,7 +24,7 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
 
 export default function TradePage() {
   const { symbol: paramSymbol } = useParams<{ symbol?: string }>()
-  const [activeSymbol, setActiveSymbol] = useState(paramSymbol?.toUpperCase() ?? 'AAPL')
+  const [activeSymbol, setActiveSymbol] = useState(paramSymbol?.toUpperCase() ?? 'RELIANCE')
   const [orderTab, setOrderTab] = useState<OrderTab>('open')
 
   useMockTicker(1500)
@@ -60,7 +60,7 @@ export default function TradePage() {
           <div className="rounded-xl border border-border bg-card px-4 py-2">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Cash</p>
             <p className="font-mono text-sm font-bold text-accent">
-              ${portfolio.cashBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {formatCurrency(portfolio.cashBalance)}
             </p>
           </div>
           <div className="rounded-xl border border-border bg-card px-4 py-2">
@@ -68,7 +68,7 @@ export default function TradePage() {
               Portfolio
             </p>
             <p className="font-mono text-sm font-bold text-foreground">
-              ${portfolio.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {formatCurrency(portfolio.totalValue)}
             </p>
           </div>
           <div className="rounded-xl border border-border bg-card px-4 py-2">
@@ -81,8 +81,7 @@ export default function TradePage() {
                 portfolio.realizedPnL >= 0 ? 'text-accent' : 'text-destructive',
               )}
             >
-              {portfolio.realizedPnL >= 0 ? '+' : ''}$
-              {portfolio.realizedPnL.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {portfolio.realizedPnL >= 0 ? '+' : ''}{formatCurrency(portfolio.realizedPnL)}
             </p>
           </div>
         </div>
@@ -108,7 +107,7 @@ export default function TradePage() {
               {q.symbol}
             </div>
             <div className="font-mono text-sm font-bold tabular-nums text-foreground">
-              ${q.price.toFixed(2)}
+              {formatCurrency(q.price)}
             </div>
             <div
               className={cn(
@@ -251,13 +250,13 @@ export default function TradePage() {
                     <td className="hidden px-4 py-2.5 text-right text-xs text-muted-foreground md:table-cell">
                       {o.limitPrice !== undefined && (
                         <div>
-                          <span className="text-foreground">${o.limitPrice.toFixed(2)}</span>
+                          <span className="text-foreground">{formatCurrency(o.limitPrice)}</span>
                           <span className="ml-0.5 text-[9px]">lmt</span>
                         </div>
                       )}
                       {o.stopPrice !== undefined && (
                         <div>
-                          <span className="text-foreground">${o.stopPrice.toFixed(2)}</span>
+                          <span className="text-foreground">{formatCurrency(o.stopPrice)}</span>
                           <span className="ml-0.5 text-[9px]">stp</span>
                         </div>
                       )}
@@ -270,7 +269,7 @@ export default function TradePage() {
                     <td className="hidden px-4 py-2.5 text-right tabular-nums sm:table-cell">
                       {o.filledPrice !== undefined ? (
                         <span className="font-medium text-foreground">
-                          ${o.filledPrice.toFixed(2)}
+                          {formatCurrency(o.filledPrice)}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
@@ -279,7 +278,7 @@ export default function TradePage() {
 
                     {/* Total value */}
                     <td className="hidden px-4 py-2.5 text-right tabular-nums text-foreground lg:table-cell">
-                      ${o.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {formatCurrency(o.totalValue)}
                     </td>
 
                     {/* Status */}

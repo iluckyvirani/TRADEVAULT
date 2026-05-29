@@ -14,7 +14,6 @@ function generateCandles(
   volatility = 0.015,
 ): Candle[] {
   const candles: Candle[] = []
-  // Start days ago, market open at 09:30 EST (14:30 UTC)
   const now = Math.floor(Date.now() / 1000)
   const startDay = now - days * 86400
 
@@ -22,7 +21,6 @@ function generateCandles(
 
   for (let d = 0; d < days; d++) {
     const dayStart = startDay + d * 86400
-    // Skip weekends (simple approach)
     const date = new Date(dayStart * 1000)
     const dow = date.getUTCDay()
     if (dow === 0 || dow === 6) continue
@@ -32,10 +30,10 @@ function generateCandles(
     const close = Math.max(open + change, open * 0.85)
     const high = Math.max(open, close) * (1 + Math.random() * volatility * 0.5)
     const low = Math.min(open, close) * (1 - Math.random() * volatility * 0.5)
-    const volume = Math.floor(10_000_000 + Math.random() * 40_000_000)
+    const volume = Math.floor(3_000_000 + Math.random() * 12_000_000)
 
     candles.push({
-      time: dayStart + 14 * 3600 + 30 * 60, // 14:30 UTC
+      time: dayStart + 9 * 3600 + 15 * 60,
       open: parseFloat(open.toFixed(2)),
       high: parseFloat(high.toFixed(2)),
       low: parseFloat(low.toFixed(2)),
@@ -50,13 +48,14 @@ function generateCandles(
 }
 
 export const mockCandles: Record<string, Candle[]> = {
-  AAPL: generateCandles(165, 180, 0.012),
-  MSFT: generateCandles(370, 180, 0.010),
-  TSLA: generateCandles(200, 180, 0.030),
-  NVDA: generateCandles(750, 180, 0.022),
-  GOOGL: generateCandles(140, 180, 0.013),
-  AMZN: generateCandles(175, 180, 0.014),
-  META: generateCandles(460, 180, 0.016),
-  SPY: generateCandles(490, 180, 0.007),
-  QQQ: generateCandles(420, 180, 0.009),
+  RELIANCE: generateCandles(2800, 180, 0.012),
+  HDFCBANK: generateCandles(1650, 180, 0.010),
+  INFY: generateCandles(1680, 180, 0.011),
+  TCS: generateCandles(3750, 180, 0.009),
+  ICICIBANK: generateCandles(1220, 180, 0.013),
+  SBI: generateCandles(780, 180, 0.014),
+  BHARTIARTL: generateCandles(1260, 180, 0.012),
+  AXISBANK: generateCandles(1060, 180, 0.015),
+  NIFTY: generateCandles(24250, 180, 0.007),
+  BANKNIFTY: generateCandles(53100, 180, 0.008),
 }
