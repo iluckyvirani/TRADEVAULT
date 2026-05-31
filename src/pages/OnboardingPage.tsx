@@ -49,7 +49,7 @@ export default function OnboardingPage() {
 
   // Guards
   useEffect(() => {
-    if (!isAuthenticated) { navigate('/login', { replace: true }); return }
+    if (!isAuthenticated) { navigate('/auth', { replace: true }); return }
     if (onboardingComplete) { navigate('/dashboard', { replace: true }) }
   }, [isAuthenticated, onboardingComplete, navigate])
 
@@ -102,7 +102,7 @@ export default function OnboardingPage() {
       name: displayName.trim(),
       avatar,
       startingBalance: balance,
-      currency,
+      currency: 'INR',
       // Store emoji in name field isn't ideal — avatar id stored separately
     })
     // Pass selected symbols as a side-effect (would go to store in Phase 5)

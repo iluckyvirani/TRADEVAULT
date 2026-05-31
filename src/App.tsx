@@ -1,23 +1,24 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import AuthGuard from '@/components/auth/AuthGuard'
-import AppShell from '@/components/shell/AppShell'
+import AuthGuard, { GuestGuard, RegistrationGuard } from '@/components/auth/AuthGuard'
+import EvaluationShell from '@/components/evaluation/EvaluationShell'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageSkeleton, DashboardSkeleton } from '@/components/ui/Skeleton'
 
 // ── Code-split every page ──────────────────────────────────────────────────────
 const LandingPage    = lazy(() => import('@/pages/LandingPage'))
-const SignupPage     = lazy(() => import('@/pages/SignupPage'))
-const LoginPage      = lazy(() => import('@/pages/LoginPage'))
-const OnboardingPage = lazy(() => import('@/pages/OnboardingPage'))
-const DashboardPage  = lazy(() => import('@/pages/DashboardPage'))
-const TradePage      = lazy(() => import('@/pages/TradePage'))
-const PortfolioPage  = lazy(() => import('@/pages/PortfolioPage'))
-const WatchlistPage  = lazy(() => import('@/pages/WatchlistPage'))
-const AnalyticsPage  = lazy(() => import('@/pages/AnalyticsPage'))
-const JournalPage    = lazy(() => import('@/pages/JournalPage'))
-const LeaderboardPage = lazy(() => import('@/pages/LeaderboardPage'))
-const SettingsPage   = lazy(() => import('@/pages/SettingsPage'))
+const AuthPage            = lazy(() => import('@/pages/AuthPage'))
+const CompleteProfilePage = lazy(() => import('@/pages/CompleteProfilePage'))
+const VerifyEmailPage     = lazy(() => import('@/pages/VerifyEmailPage'))
+const AuthLoadingPage     = lazy(() => import('@/pages/AuthLoadingPage'))
+const OnboardingPage      = lazy(() => import('@/pages/OnboardingPage'))
+const AccountsDashboardPage = lazy(() => import('@/pages/AccountsDashboardPage'))
+const AccountsListPage      = lazy(() => import('@/pages/AccountsListPage'))
+const AccountStatsPage      = lazy(() => import('@/pages/AccountStatsPage'))
+const TradingRoomPage       = lazy(() => import('@/pages/TradingRoomPage'))
+const EvaluationCheckoutPage = lazy(() => import('@/pages/EvaluationCheckoutPage'))
+const PlaceholderPage       = lazy(() => import('@/pages/PlaceholderPage'))
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 
 function AppPageFallback() {
   return (
@@ -51,20 +52,53 @@ export default function App() {
           />
           <Route
             path="/signup"
-            element={
-              <Suspense fallback={null}>
-                <SignupPage />
-              </Suspense>
-            }
+            element={<Navigate to="/auth?tab=create" replace />}
           />
           <Route
             path="/login"
+            element={<Navigate to="/auth?tab=signin" replace />}
+          />
+          <Route
+            path="/auth"
             element={
-              <Suspense fallback={null}>
-                <LoginPage />
-              </Suspense>
+              <GuestGuard>
+                <Suspense fallback={null}>
+                  <AuthPage />
+                </Suspense>
+              </GuestGuard>
             }
           />
+          <Route
+            path="/auth/complete-profile"
+            element={
+              <RegistrationGuard requiredStep="registered">
+                <Suspense fallback={null}>
+                  <CompleteProfilePage />
+                </Suspense>
+              </RegistrationGuard>
+            }
+          />
+          <Route
+            path="/auth/verify-email"
+            element={
+              <RegistrationGuard requiredStep="profile_completed">
+                <Suspense fallback={null}>
+                  <VerifyEmailPage />
+                </Suspense>
+              </RegistrationGuard>
+            }
+          />
+          <Route
+            path="/auth/loading"
+            element={
+              <AuthGuard>
+                <Suspense fallback={null}>
+                  <AuthLoadingPage />
+                </Suspense>
+              </AuthGuard>
+            }
+          />
+          {/* Legacy auth pages — redirect handled above */}
           {/* Onboarding */}
           <Route
             path="/onboarding"
@@ -76,11 +110,11 @@ export default function App() {
               </AuthGuard>
             }
           />
-          {/* App shell – auth required */}
+          {/* Evaluation app shell */}
           <Route
             element={
               <AuthGuard>
-                <AppShell />
+                <EvaluationShell />
               </AuthGuard>
             }
           >
@@ -89,92 +123,51 @@ export default function App() {
               element={
                 <ErrorBoundary label="Dashboard error">
                   <Suspense fallback={<DashboardFallback />}>
-                    <DashboardPage />
+                    <AccountsDashboardPage />
                   </Suspense>
                 </ErrorBoundary>
               }
             />
+            <Route path="/accounts" element={<Suspense fallback={<AppPageFallback />}><AccountsListPage /></Suspense>} />
             <Route
-              path="/trade"
+              path="/accounts/:accountId/stats"
               element={
-                <ErrorBoundary label="Trade page error">
-                  <Suspense fallback={<AppPageFallback />}>
-                    <TradePage />
-                  </Suspense>
-                </ErrorBoundary>
+                <Suspense fallback={<AppPageFallback />}>
+                  <AccountStatsPage />
+                </Suspense>
               }
             />
-            <Route
-              path="/trade/:symbol"
-              element={
-                <ErrorBoundary label="Trade page error">
-                  <Suspense fallback={<AppPageFallback />}>
-                    <TradePage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/portfolio"
-              element={
-                <ErrorBoundary label="Portfolio error">
-                  <Suspense fallback={<AppPageFallback />}>
-                    <PortfolioPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/watchlist"
-              element={
-                <ErrorBoundary label="Watchlist error">
-                  <Suspense fallback={<AppPageFallback />}>
-                    <WatchlistPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ErrorBoundary label="Analytics error">
-                  <Suspense fallback={<AppPageFallback />}>
-                    <AnalyticsPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/journal"
-              element={
-                <ErrorBoundary label="Journal error">
-                  <Suspense fallback={<AppPageFallback />}>
-                    <JournalPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/leaderboard"
-              element={
-                <ErrorBoundary label="Leaderboard error">
-                  <Suspense fallback={<AppPageFallback />}>
-                    <LeaderboardPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ErrorBoundary label="Settings error">
-                  <Suspense fallback={<AppPageFallback />}>
-                    <SettingsPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
+            <Route path="/evaluation" element={<Suspense fallback={<AppPageFallback />}><EvaluationCheckoutPage /></Suspense>} />
+            <Route path="/profile" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Profile" /></Suspense>} />
+            <Route path="/affiliate" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Affiliate" /></Suspense>} />
+            <Route path="/certificates" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Certificates" /></Suspense>} />
+            <Route path="/billing" element={<Navigate to="/evaluation" replace />} />
+            <Route path="/rewards" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Rewards" /></Suspense>} />
+            <Route path="/contact" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Contact" /></Suspense>} />
+            <Route path="/chatbot" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Chatbot" /></Suspense>} />
+            {/* Legacy broker routes */}
+            <Route path="/trade" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/trade/:symbol" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/portfolio" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/watchlist" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/analytics" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/journal" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/leaderboard" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/settings" element={<Navigate to="/dashboard" replace />} />
           </Route>
+          {/* Trading room — no sidebar */}
+          <Route
+            path="/accounts/:accountId/trading-room"
+            element={
+              <AuthGuard>
+                <Suspense fallback={null}>
+                  <TradingRoomPage />
+                </Suspense>
+              </AuthGuard>
+            }
+          />
+          {/* Legacy shell (hidden) */}
+          <Route path="/dashboard-old" element={<AuthGuard><Suspense fallback={<DashboardFallback />}><DashboardPage /></Suspense></AuthGuard>} />
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

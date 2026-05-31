@@ -4,6 +4,8 @@
 > **Stack Note:** This project uses **Neon PostgreSQL** (not Supabase).  
 > **Build Strategy:** Frontend-first with dummy/mock data → Backend in Node.js + Express + Neon PostgreSQL after frontend is complete.
 
+> **Evaluation flow (Market Rush model):** Post-login navigation, **auth/onboarding**, accounts dashboard, stats, and trading room are specified in **[MARKET_RUSH_FLOW_SPEC.md](./MARKET_RUSH_FLOW_SPEC.md)** v1.2. That document supersedes §5–§6 and §9 of this file for in-app UX. Landing page and backend plans remain here.
+
 ---
 
 ## Table of Contents
