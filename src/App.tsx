@@ -17,6 +17,8 @@ const AccountsListPage      = lazy(() => import('@/pages/AccountsListPage'))
 const AccountStatsPage      = lazy(() => import('@/pages/AccountStatsPage'))
 const TradingRoomPage       = lazy(() => import('@/pages/TradingRoomPage'))
 const EvaluationCheckoutPage = lazy(() => import('@/pages/EvaluationCheckoutPage'))
+const FreeTrialPage = lazy(() => import('@/pages/FreeTrialPage'))
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 const PlaceholderPage       = lazy(() => import('@/pages/PlaceholderPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 
@@ -138,7 +140,8 @@ export default function App() {
               }
             />
             <Route path="/evaluation" element={<Suspense fallback={<AppPageFallback />}><EvaluationCheckoutPage /></Suspense>} />
-            <Route path="/profile" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Profile" /></Suspense>} />
+            <Route path="/free-trial" element={<Suspense fallback={<AppPageFallback />}><FreeTrialPage /></Suspense>} />
+            <Route path="/profile" element={<Suspense fallback={<AppPageFallback />}><ProfilePage /></Suspense>} />
             <Route path="/affiliate" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Affiliate" /></Suspense>} />
             <Route path="/certificates" element={<Suspense fallback={<AppPageFallback />}><PlaceholderPage title="Certificates" /></Suspense>} />
             <Route path="/billing" element={<Navigate to="/evaluation" replace />} />

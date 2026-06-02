@@ -20,10 +20,14 @@ export default function VerifyEmailPage() {
     return () => clearInterval(id)
   }, [secondsLeft])
 
-  function handleResend() {
-    if (secondsLeft > 0) return
+  function handleVerifyNow() {
     verifyEmail()
     navigate('/auth/loading', { replace: true })
+  }
+
+  function handleResend() {
+    if (secondsLeft > 0) return
+    setSecondsLeft(RESEND_SECONDS)
   }
 
   return (
@@ -45,13 +49,24 @@ export default function VerifyEmailPage() {
           <span className="font-medium text-gray-800">{user?.email ?? 'your email'}</span>.
         </p>
 
-        <div className="mb-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+        <div className="mb-4 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
           <ul className="list-disc space-y-2 pl-4">
             <li>Open the link sent to your inbox.</li>
             <li>Check spam or promotions if you don&apos;t see it.</li>
             <li>You can request another email after 60s.</li>
           </ul>
         </div>
+
+        <button
+          type="button"
+          onClick={handleVerifyNow}
+          className="mb-2 w-full rounded-lg bg-[#002D5B] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#001f3f]"
+        >
+          I&apos;ve verified my email
+        </button>
+        <p className="mb-6 text-center text-xs text-gray-400">
+          Demo mode — no real email is sent. Click above to continue.
+        </p>
 
         <div className="flex items-center justify-between">
           <Link

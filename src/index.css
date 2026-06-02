@@ -4,36 +4,67 @@
 
 @layer base {
   :root {
-    /* tradeox Dark Theme — CSS variables for shadcn/ui */
-    --background: 215 28% 9%;       /* #0F172A */
-    --foreground: 214 32% 91%;      /* #E2E8F0 */
+    /* Light theme (evaluation shell default) */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
 
-    --card: 215 25% 15%;            /* #1E293B */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 239 84% 67%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark theme */
+    --background: 215 28% 9%;
+    --foreground: 214 32% 91%;
+
+    --card: 215 25% 15%;
     --card-foreground: 214 32% 91%;
 
     --popover: 215 25% 15%;
     --popover-foreground: 214 32% 91%;
 
-    --primary: 239 84% 67%;         /* #6366F1 indigo */
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 20% 25%;       /* #334155 */
+    --secondary: 215 20% 25%;
     --secondary-foreground: 214 32% 91%;
 
     --muted: 215 20% 25%;
-    --muted-foreground: 215 16% 60%; /* #94A3B8 */
+    --muted-foreground: 215 16% 60%;
 
-    --accent: 160 84% 39%;          /* #10B981 green */
+    --accent: 160 84% 39%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;       /* #EF4444 */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 215 20% 22%;
     --input: 215 20% 22%;
     --ring: 239 84% 67%;
-
-    --radius: 0.5rem;
   }
 }
 

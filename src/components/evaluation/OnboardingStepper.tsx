@@ -1,16 +1,35 @@
 import { useNavigate } from 'react-router-dom'
 import { Check, Flag } from 'lucide-react'
+import { useThemeStore } from '@/store/themeStore'
 import { cn } from '@/lib/utils'
 
 export default function OnboardingStepper() {
   const navigate = useNavigate()
+  const isDark = useThemeStore((s) => s.mode === 'dark')
 
   return (
-    <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-      <h2 className="text-center text-xl font-bold text-gray-900">
+    <div
+      className={cn(
+        'mb-6 rounded-2xl border p-8 shadow-sm',
+        isDark ? 'border-white/10 bg-[#141414]' : 'border-gray-200 bg-white',
+      )}
+    >
+      <h2
+        className={cn(
+          'text-center text-xl font-bold',
+          isDark ? 'text-white' : 'text-gray-900',
+        )}
+      >
         Start your evaluation
       </h2>
-      <p className="mt-1 text-center text-sm text-gray-500">Click the flag to begin.</p>
+      <p
+        className={cn(
+          'mt-1 text-center text-sm',
+          isDark ? 'text-gray-400' : 'text-gray-500',
+        )}
+      >
+        Click the flag to begin.
+      </p>
 
       <div className="mx-auto mt-8 flex max-w-lg items-center justify-between">
         <Step done label="Registered" />

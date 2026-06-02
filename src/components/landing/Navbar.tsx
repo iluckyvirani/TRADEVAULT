@@ -58,7 +58,7 @@ export default function Navbar() {
             Log In
           </Link>
           <Link
-            to="/signup"
+            to="/auth?tab=create"
             className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Start Free
@@ -97,7 +97,7 @@ export default function Navbar() {
               Log In
             </Link>
             <Link
-              to="/signup"
+              to="/auth?tab=create"
               className="text-sm text-center bg-primary text-white py-2 rounded-lg font-semibold"
               onClick={() => setMenuOpen(false)}
             >

@@ -58,7 +58,7 @@ export default function HeroSection() {
           {/* CTAs */}
           <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <Link
-              to="/signup"
+              to="/auth?tab=create"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary/25 transition-all duration-200 hover:scale-105 hover:bg-[#4F46E5]"
             >
               Start Trading Free

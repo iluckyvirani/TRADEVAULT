@@ -36,14 +36,26 @@ export function generateAccountId(prefix = 'FTL') {
   return `${prefix}-${randomSegment(4)}-${randomSegment(4)}-${randomSegment(4)}-${randomSegment(4)}-${randomSegment(1)}`
 }
 
-export function createFreeTrialAccount(userId: string): EvaluationAccount {
-  const size = 1_000_000
+export interface FreeTrialOptions {
+  stepType?: EvaluationStep
+  accountSize?: number
+}
+
+export function createFreeTrialAccount(
+  userId: string,
+  options: FreeTrialOptions = {},
+): EvaluationAccount {
+  const stepType = options.stepType ?? '2-Step'
+  const size = options.accountSize ?? 1_000_000
+  const maxLoss = Math.round(size * 0.1)
+  const dailyMaxLoss = Math.round(size * (stepType === '1-Step' ? 0.03 : 0.05))
+  const profitTarget = Math.round(size * 0.05)
   return {
     id: generateAccountId('FTL'),
     userId,
     plan: 'free_trial',
     status: 'active',
-    stepType: '2-Step',
+    stepType,
     accountSize: size,
     balance: size,
     equity: size,
@@ -51,13 +63,50 @@ export function createFreeTrialAccount(userId: string): EvaluationAccount {
     todayPnL: 0,
     freeMargin: size,
     marginUsed: 0,
-    maxLoss: 100_000,
-    dailyMaxLoss: 50_000,
-    profitTarget: 50_000,
+    maxLoss,
+    dailyMaxLoss,
+    profitTarget,
     minTradingDays: 2,
     tradingDaysCompleted: 0,
     rolloverProfit: 0,
     createdAt: new Date().toISOString(),
-    labels: ['ACTIVE', 'FREE TRIAL', '2-Step'],
+    labels: ['ACTIVE', 'FREE TRIAL', stepType],
+  }
+}
+
+export interface PaidAccountOptions {
+  stepType: EvaluationStep
+  accountSize: number
+}
+
+export function createPaidAccount(
+  userId: string,
+  options: PaidAccountOptions,
+): EvaluationAccount {
+  const { stepType, accountSize: size } = options
+  const maxLoss = Math.round(size * 0.1)
+  const dailyMaxLoss = Math.round(size * (stepType === '1-Step' ? 0.03 : 0.05))
+  const profitTarget = Math.round(size * 0.05)
+  return {
+    id: generateAccountId('EVL'),
+    userId,
+    plan: 'paid',
+    status: 'active',
+    stepType,
+    accountSize: size,
+    balance: size,
+    equity: size,
+    unrealizedPnL: 0,
+    todayPnL: 0,
+    freeMargin: size,
+    marginUsed: 0,
+    maxLoss,
+    dailyMaxLoss,
+    profitTarget,
+    minTradingDays: stepType === '1-Step' ? 2 : 4,
+    tradingDaysCompleted: 0,
+    rolloverProfit: 0,
+    createdAt: new Date().toISOString(),
+    labels: ['ACTIVE', stepType],
   }
 }

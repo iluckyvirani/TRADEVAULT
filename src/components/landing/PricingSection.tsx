@@ -58,7 +58,7 @@ export default function PricingSection() {
               <span className="pb-1 text-muted-foreground">/month</span>
             </div>
             <Link
-              to="/signup"
+              to="/auth?tab=create"
               className="mb-8 block rounded-xl border border-border py-3 text-center font-medium text-foreground transition-colors hover:border-primary/50 hover:text-primary"
             >
               Get Started Free
@@ -90,7 +90,7 @@ export default function PricingSection() {
               <span className="pb-1 text-muted-foreground">/month</span>
             </div>
             <Link
-              to="/signup"
+              to="/auth?tab=create"
               className="mb-8 block rounded-xl bg-primary py-3 text-center font-semibold text-white shadow-lg shadow-primary/30 transition-all duration-200 hover:scale-[1.02] hover:bg-[#4F46E5]"
             >
               Start Pro Trial
