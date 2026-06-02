@@ -58,18 +58,18 @@ export default function FreeTrialPage() {
     <div className="mx-auto max-w-6xl p-4 md:p-6 lg:p-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_340px]">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">About the Free Trial</h1>
-          <p className="mt-3 text-sm leading-relaxed text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">About the Free Trial</h1>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             The Free Trial is a risk-free way to explore the platform in a simulated environment.
             You can practice trading, understand how evaluation rules work, and get familiar with
             the interface before starting a paid assessment.
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-gray-600">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Free Trial accounts are not eligible for Rewards Accounts. When you are ready for a
             formal evaluation, choose a paid assessment path from the dashboard.
           </p>
 
-          <h2 className="mt-8 text-sm font-semibold uppercase tracking-wider text-gray-500">
+          <h2 className="mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Program
           </h2>
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -84,7 +84,7 @@ export default function FreeTrialPage() {
                     'relative rounded-2xl border p-5 text-left transition-all',
                     selected
                       ? 'border-[#002D5B] bg-[#002D5B] text-white shadow-md'
-                      : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300',
+                      : 'border-border bg-card text-foreground hover:border-muted-foreground/40',
                   )}
                 >
                   {selected && (
@@ -99,7 +99,7 @@ export default function FreeTrialPage() {
                         key={rule}
                         className={cn(
                           'text-sm',
-                          selected ? 'text-blue-100' : 'text-gray-600',
+                          selected ? 'text-blue-100' : 'text-muted-foreground',
                         )}
                       >
                         {rule}
@@ -111,7 +111,7 @@ export default function FreeTrialPage() {
             })}
           </div>
 
-          <h2 className="mt-8 text-sm font-semibold uppercase tracking-wider text-gray-500">
+          <h2 className="mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Account Balance
           </h2>
           <div className="mt-3 grid grid-cols-2 gap-4">
@@ -126,7 +126,7 @@ export default function FreeTrialPage() {
                     'relative rounded-2xl border p-5 text-left transition-all',
                     selected
                       ? 'border-[#002D5B] bg-[#002D5B] text-white shadow-md'
-                      : 'border-gray-200 bg-white hover:border-gray-300',
+                      : 'border-border bg-card hover:border-muted-foreground/40',
                   )}
                 >
                   {tier.popular && (
@@ -143,7 +143,7 @@ export default function FreeTrialPage() {
                   <p
                     className={cn(
                       'mt-1 text-sm',
-                      selected ? 'text-blue-100' : 'text-gray-600',
+                      selected ? 'text-blue-100' : 'text-muted-foreground',
                     )}
                   >
                     {formatCurrencyWhole(tier.size)}
@@ -151,7 +151,7 @@ export default function FreeTrialPage() {
                   <p
                     className={cn(
                       'mt-3 text-sm font-medium',
-                      selected ? 'text-white' : 'text-gray-900',
+                      selected ? 'text-white' : 'text-foreground',
                     )}
                   >
                     Free
@@ -159,7 +159,7 @@ export default function FreeTrialPage() {
                   <p
                     className={cn(
                       'text-xs',
-                      selected ? 'text-blue-200' : 'text-gray-500',
+                      selected ? 'text-blue-200' : 'text-muted-foreground',
                     )}
                   >
                     Without risking
@@ -169,27 +169,27 @@ export default function FreeTrialPage() {
             })}
           </div>
 
-          <div className="mt-6 flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4">
-            <Monitor className="h-5 w-5 flex-shrink-0 text-gray-500" />
+          <div className="mt-6 flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+            <Monitor className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
             <div>
-              <p className="text-xs text-gray-500">Platform</p>
-              <p className="text-sm font-semibold text-gray-900">TradingView Web Terminal</p>
+              <p className="text-xs text-muted-foreground">Platform</p>
+              <p className="text-sm font-semibold text-foreground">TradingView Web Terminal</p>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
             <div className="flex items-start gap-3">
-              <MessageCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-500" />
+              <MessageCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Need some help?</p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm font-medium text-foreground">Need some help?</p>
+                <p className="text-sm text-muted-foreground">
                   We&apos;re here for you. Write us a message.
                 </p>
               </div>
             </div>
             <button
               type="button"
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border border-muted-foreground/40 px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
             >
               Chat with us
             </button>
@@ -197,16 +197,16 @@ export default function FreeTrialPage() {
         </div>
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900">Summary</h2>
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-foreground">Summary</h2>
 
-            <div className="mt-4 flex items-center gap-3 border-b border-gray-100 pb-4">
+            <div className="mt-4 flex items-center gap-3 border-b border-border pb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50">
                 <Star className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Free Trial</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm font-medium text-foreground">Free Trial</p>
+                <p className="text-sm text-muted-foreground">
                   Account {formatCurrencyWhole(accountSize)}
                 </p>
               </div>
@@ -214,21 +214,21 @@ export default function FreeTrialPage() {
 
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between">
-                <dt className="text-gray-500">Program</dt>
-                <dd className="font-medium text-gray-900">{stepType}</dd>
+                <dt className="text-muted-foreground">Program</dt>
+                <dd className="font-medium text-foreground">{stepType}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Trading Account Currency</dt>
-                <dd className="font-medium text-gray-900">INR</dd>
+                <dt className="text-muted-foreground">Trading Account Currency</dt>
+                <dd className="font-medium text-foreground">INR</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Platform</dt>
-                <dd className="font-medium text-gray-900">TradingView Web</dd>
+                <dt className="text-muted-foreground">Platform</dt>
+                <dd className="font-medium text-foreground">TradingView Web</dd>
               </div>
             </dl>
 
-            <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-              <span className="text-sm text-gray-600">Total:</span>
+            <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+              <span className="text-sm text-muted-foreground">Total:</span>
               <span className="text-lg font-bold text-green-600">Free</span>
             </div>
 
@@ -240,7 +240,7 @@ export default function FreeTrialPage() {
               Start Free Trial
             </button>
 
-            <p className="mt-4 text-center text-[11px] leading-relaxed text-gray-400">
+            <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground">
               By starting a free trial, you agree to our evaluation rules and understand this is
               a simulated environment.
             </p>

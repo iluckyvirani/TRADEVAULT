@@ -22,7 +22,7 @@ export default function EvaluationPlanCard({ plan, selected, onSelect }: Props) 
         'relative rounded-2xl border p-5 text-left transition-all',
         selected
           ? 'border-[#002D5B] bg-[#002D5B] text-white shadow-md'
-          : 'border-gray-200 bg-white hover:border-gray-300',
+          : 'border-border bg-card hover:border-muted-foreground/40',
       )}
     >
       {plan.popular && (
@@ -37,13 +37,13 @@ export default function EvaluationPlanCard({ plan, selected, onSelect }: Props) 
       )}
 
       <p className="text-2xl font-bold">{balanceLabel}</p>
-      <p className={cn('mt-1 text-sm', selected ? 'text-blue-100' : 'text-gray-600')}>
+      <p className={cn('mt-1 text-sm', selected ? 'text-blue-100' : 'text-muted-foreground')}>
         {formatCurrencyWhole(plan.balance)}
       </p>
-      <p className={cn('mt-4 text-lg font-semibold', selected ? 'text-white' : 'text-gray-900')}>
+      <p className={cn('mt-4 text-lg font-semibold', selected ? 'text-white' : 'text-foreground')}>
         ₹ {plan.evaluationFee.toLocaleString('en-IN')}
       </p>
-      <p className={cn('text-xs line-through', selected ? 'text-blue-200' : 'text-gray-400')}>
+      <p className={cn('text-xs line-through', selected ? 'text-blue-200' : 'text-muted-foreground')}>
         ₹ {plan.originalFee.toLocaleString('en-IN')}
       </p>
       <p className={cn('mt-1 text-xs', selected ? 'text-green-300' : 'text-green-600')}>

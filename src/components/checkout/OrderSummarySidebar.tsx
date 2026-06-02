@@ -19,18 +19,18 @@ export default function OrderSummarySidebar({ onPay }: Props) {
 
   return (
     <aside className="lg:sticky lg:top-6 lg:self-start">
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900">Order summary</h2>
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-foreground">Order summary</h2>
 
-        <div className="mt-4 rounded-xl bg-slate-100 p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+        <div className="mt-4 rounded-xl bg-muted p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Total payable
           </p>
           <div className="mt-1 flex flex-wrap items-baseline gap-2">
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-2xl font-bold text-foreground">
               ₹ {plan.evaluationFee.toLocaleString('en-IN')}
             </span>
-            <span className="text-sm text-gray-400 line-through">
+            <span className="text-sm text-muted-foreground line-through">
               ₹ {plan.originalFee.toLocaleString('en-IN')}
             </span>
           </div>
@@ -45,7 +45,7 @@ export default function OrderSummarySidebar({ onPay }: Props) {
             ].map(({ icon: Icon, label }) => (
               <span
                 key={label}
-                className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[10px] text-gray-500"
+                className="inline-flex items-center gap-1 rounded-full bg-card px-2 py-0.5 text-[10px] text-muted-foreground"
               >
                 <Icon className="h-3 w-3" />
                 {label}
@@ -63,30 +63,30 @@ export default function OrderSummarySidebar({ onPay }: Props) {
           ].map(([label, value]) => (
             <div
               key={label}
-              className="flex justify-between border-b border-gray-100 pb-2"
+              className="flex justify-between border-b border-border pb-2"
             >
-              <dt className="text-gray-500">{label}</dt>
-              <dd className="font-medium text-gray-900">{value}</dd>
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="font-medium text-foreground">{value}</dd>
             </div>
           ))}
         </dl>
 
-        <p className="mt-3 text-center text-xs text-gray-400">
+        <p className="mt-3 text-center text-xs text-muted-foreground">
           UPI · Card · Netbanking
         </p>
 
         <label className="mt-4 block">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Affiliate code
           </span>
           <div className="relative mt-1">
-            <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               value={affiliateCode}
               onChange={(e) => setAffiliateCode(e.target.value)}
               placeholder="e.g. ABC123"
-              className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#002D5B]"
+              className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-[#002D5B]"
             />
           </div>
         </label>
@@ -98,7 +98,7 @@ export default function OrderSummarySidebar({ onPay }: Props) {
             onChange={(e) => setTermsAccepted(e.target.checked)}
             className="mt-1"
           />
-          <span className="text-xs leading-relaxed text-gray-600">
+          <span className="text-xs leading-relaxed text-muted-foreground">
             I agree to the payment &amp; service terms. Fees are non-refundable except for
             verified payment errors. See Refund Policy, Terms, and Privacy Policy.
           </span>
@@ -119,7 +119,7 @@ export default function OrderSummarySidebar({ onPay }: Props) {
           Pay ₹ {plan.evaluationFee.toLocaleString('en-IN')}
         </button>
 
-        <p className="mt-3 text-center text-[10px] text-gray-400">
+        <p className="mt-3 text-center text-[10px] text-muted-foreground">
           Account issued instantly after payment. In rare cases, up to 24 hours.
         </p>
       </div>
