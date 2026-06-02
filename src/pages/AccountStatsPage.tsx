@@ -77,7 +77,7 @@ export default function AccountStatsPage() {
   )
 
   async function copyId() {
-    await navigator.clipboard.writeText(account.id)
+    await navigator.clipboard.writeText(account?.id ?? '')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

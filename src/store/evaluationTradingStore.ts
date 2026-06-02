@@ -73,7 +73,7 @@ function notional(price: number, lots: number, lotSize: number) {
 }
 
 function syncAccountFromTrading(accountId: string) {
-  const { positions, getOrdersForAccount } = useEvaluationTradingStore.getState()
+  const { positions } = useEvaluationTradingStore.getState()
   const accountPositions = positions.filter(
     (p) => p.accountId === accountId && p.lots > 0,
   )

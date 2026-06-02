@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
   AtSign,
-  Check,
   CircleUserRound,
   Cog,
   Lock,
-  Mail,
   Moon,
   ShieldCheck,
   Sun,
