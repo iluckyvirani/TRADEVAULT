@@ -23,10 +23,10 @@ export default function AccountsListPage() {
   const todayPnl = master?.todayPnL ?? 0
   const totalPnl = master?.unrealizedPnL ?? 0
 
-  const titleCls = 'text-gray-900'
-  const subCls = 'text-gray-500'
-  const cardCls = 'border-gray-200 bg-white'
-  const rowCls = 'border-gray-200'
+  const titleCls = 'text-foreground'
+  const subCls = 'text-muted-foreground'
+  const cardCls = 'border-border bg-card'
+  const rowCls = 'border-border'
 
   return (
     <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-7">
@@ -76,10 +76,10 @@ export default function AccountsListPage() {
               type="button"
               onClick={() => setOpenSelector((v) => !v)}
               className={cn(
-                'flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900',
+                'flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground',
               )}
             >
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 {master ? master.id.slice(0, 18) + '…' : 'Select master account'}
               </span>
               <ChevronDown className="h-4 w-4" />
@@ -87,7 +87,7 @@ export default function AccountsListPage() {
             {openSelector && (
               <div
                 className={cn(
-                  'absolute right-0 z-10 mt-1 w-72 rounded-lg border border-gray-200 bg-white shadow-lg',
+                  'absolute right-0 z-10 mt-1 w-72 rounded-lg border border-border bg-card shadow-lg',
                 )}
               >
                 <p className={cn('px-3 py-2 text-[10px] font-semibold uppercase tracking-wider', subCls)}>
@@ -105,7 +105,7 @@ export default function AccountsListPage() {
                         setOpenSelector(false)
                       }}
                       className={cn(
-                        'block w-full px-3 py-2 text-left text-sm hover:bg-gray-50',
+                        'block w-full px-3 py-2 text-left text-sm hover:bg-muted',
                         masterAccountId === acc.id && 'font-semibold',
                       )}
                     >
@@ -210,10 +210,10 @@ function StatCard({
   rowClass: string
 }) {
   const text =
-    value < 0 ? 'text-red-500' : value > 0 ? 'text-green-500' : 'text-gray-900'
+    value < 0 ? 'text-red-500' : value > 0 ? 'text-green-500' : 'text-foreground'
   return (
     <div className={cn('px-4 py-3 sm:border-r', rowClass)}>
-      <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       <p className={cn('mt-1 text-2xl font-bold', text)}>

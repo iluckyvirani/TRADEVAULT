@@ -38,16 +38,16 @@ export default function EquityCurveChart({ account }: Props) {
   const breachLine = account.accountSize - account.dailyMaxLoss
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Equity Curve</h3>
-          <p className="text-xs text-gray-500">
+          <h3 className="text-sm font-semibold text-foreground">Equity Curve</h3>
+          <p className="text-xs text-muted-foreground">
             Live account performance · IST (Asia/Kolkata)
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg border border-gray-200 p-0.5">
+          <div className="flex rounded-lg border border-border p-0.5">
             {(['absolute', 'percent'] as const).map((m) => (
               <button
                 key={m}
@@ -55,14 +55,14 @@ export default function EquityCurveChart({ account }: Props) {
                 onClick={() => setMode(m)}
                 className={cn(
                   'rounded-md px-2 py-1 text-xs font-medium',
-                  mode === m ? 'bg-gray-900 text-white' : 'text-gray-500',
+                  mode === m ? 'bg-foreground text-background' : 'text-muted-foreground',
                 )}
               >
                 {m === 'absolute' ? '₹ Absolute' : '% Change'}
               </button>
             ))}
           </div>
-          <label className="flex items-center gap-2 text-xs text-gray-600">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
             OBJECTIVES
             <button
               type="button"
@@ -82,7 +82,7 @@ export default function EquityCurveChart({ account }: Props) {
           </label>
           <button
             type="button"
-            className="rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:text-gray-900"
+            className="rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
           >
             Reset View
           </button>
