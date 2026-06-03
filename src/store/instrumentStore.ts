@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
+  DEFAULT_TRADABLE_INSTRUMENT_ID,
   getChartSymbol,
   getInstrumentById,
-  mockInstruments,
+  getDefaultTradableInstrument,
 } from '@/lib/mock/mockInstruments'
 
 interface InstrumentStore {
@@ -20,7 +21,7 @@ interface InstrumentStore {
 export const useInstrumentStore = create<InstrumentStore>()(
   persist(
     (set, get) => ({
-      activeInstrumentId: 'idx-nifty',
+      activeInstrumentId: DEFAULT_TRADABLE_INSTRUMENT_ID,
       watchlistIds: [],
       searchOpen: false,
 
@@ -60,8 +61,20 @@ export const useInstrumentStore = create<InstrumentStore>()(
         activeInstrumentId: state.activeInstrumentId,
         watchlistIds: state.watchlistIds,
       }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<InstrumentStore> | undefined
+        const id = p?.activeInstrumentId
+        if (id === 'idx-nifty') {
+          return {
+            ...current,
+            ...p,
+            activeInstrumentId: DEFAULT_TRADABLE_INSTRUMENT_ID,
+          }
+        }
+        return { ...current, ...p }
+      },
     },
   ),
 )
 
-export const DEFAULT_INSTRUMENT = mockInstruments.find((i) => i.id === 'idx-nifty')!
+export const DEFAULT_INSTRUMENT = getDefaultTradableInstrument()

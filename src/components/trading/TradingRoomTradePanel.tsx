@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { mockQuotes } from '@/lib/mock'
 import { useEvaluationTradingStore } from '@/store/evaluationTradingStore'
 import { useTradingRoomStore, type RoomTab } from '@/store/tradingRoomStore'
@@ -28,6 +28,13 @@ interface Props {
   initialSide?: 'buy' | 'sell'
 }
 
+function parseOptionalPrice(value: string): number | undefined {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  const n = parseFloat(trimmed)
+  return Number.isFinite(n) ? n : undefined
+}
+
 export default function TradingRoomTradePanel({
   account,
   instrument,
@@ -45,7 +52,10 @@ export default function TradingRoomTradePanel({
 
   const [orderTab, setOrderTab] = useState<OrderTab>('market')
   const [lots, setLots] = useState('1')
-  const [triggerPrice, setTriggerPrice] = useState('')
+  const [orderPrice, setOrderPrice] = useState('')
+  const [optionalTrigger, setOptionalTrigger] = useState('')
+  const [takeProfit, setTakeProfit] = useState('')
+  const [stopLoss, setStopLoss] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const isDark = useThemeStore((s) => s.mode === 'dark')
@@ -58,6 +68,7 @@ export default function TradingRoomTradePanel({
   const name = instrument?.displayName ?? quote?.name ?? symbol
   const bid = instrument?.bid ?? quote?.price ?? 23350.95
   const ask = instrument?.ask ?? quote?.price ?? 23350.95
+  const ltp = instrument?.lastPrice ?? quote?.price ?? (bid + ask) / 2
 
   const border = isDark ? 'border-white/10' : 'border-gray-200'
   const panelBg = isDark ? 'bg-[#0f1115]' : 'bg-white'
@@ -66,18 +77,42 @@ export default function TradingRoomTradePanel({
     : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400'
   const actionPrice = side === 'buy' ? ask : bid
 
+  const lotsNum = Math.max(1, parseInt(lots, 10) || 1)
+  const lotSize = instrument?.lotSize ?? 1
+
+  const marginRequired = useMemo(() => {
+    const notional = actionPrice * lotsNum * lotSize
+    return parseFloat((notional * 0.2).toFixed(2))
+  }, [actionPrice, lotsNum, lotSize])
+
+  const freezeDisplay = 100000
+
   async function handleSubmit() {
     if (viewOnly || !instrument) return
-    const lotsNum = Math.max(1, parseInt(lots, 10) || 1)
-    const limitPrice = orderTab === 'limit' ? parseFloat(triggerPrice) : undefined
-    const stopPrice = orderTab === 'stop' ? parseFloat(triggerPrice) : undefined
 
-    if (orderTab === 'limit' && (!limitPrice || Number.isNaN(limitPrice))) {
+    const limitPrice =
+      orderTab === 'limit' ? parseOptionalPrice(orderPrice) : undefined
+    const stopPrice =
+      orderTab === 'stop' ? parseOptionalPrice(orderPrice) : undefined
+    const triggerPrice =
+      orderTab === 'market' ? parseOptionalPrice(optionalTrigger) : undefined
+    const takeProfitPrice = parseOptionalPrice(takeProfit)
+    const stopLossPrice = parseOptionalPrice(stopLoss)
+
+    if (orderTab === 'limit' && limitPrice === undefined) {
       showToast('Enter a valid limit price')
       return
     }
-    if (orderTab === 'stop' && (!stopPrice || Number.isNaN(stopPrice))) {
+    if (orderTab === 'stop' && stopPrice === undefined) {
       showToast('Enter a valid stop trigger price')
+      return
+    }
+    if (
+      orderTab === 'market' &&
+      optionalTrigger.trim() &&
+      triggerPrice === undefined
+    ) {
+      showToast('Enter a valid trigger price')
       return
     }
 
@@ -92,6 +127,9 @@ export default function TradingRoomTradePanel({
       lots: lotsNum,
       limitPrice,
       stopPrice,
+      triggerPrice,
+      takeProfitPrice,
+      stopLossPrice,
     })
 
     setSubmitting(false)
@@ -113,6 +151,12 @@ export default function TradingRoomTradePanel({
     }
   }
 
+  const submitLabel = viewOnly
+    ? 'View-only instrument'
+    : submitting
+      ? 'Placing…'
+      : `${side === 'buy' ? 'BUY' : 'SELL'} ${lotsNum} lot ${orderTab.toUpperCase()}`
+
   return (
     <div className={cn('flex h-full flex-col border-l', border, panelBg)}>
       <div className={cn('flex-shrink-0 border-b px-4 py-3', border)}>
@@ -133,7 +177,7 @@ export default function TradingRoomTradePanel({
             isDark ? 'text-gray-500' : 'text-gray-400',
           )}
         >
-          {account.id.slice(0, 20)}… · Lot {instrument?.lotSize ?? 1}
+          {account.id.slice(0, 20)}… · Lot {lotSize}
         </p>
       </div>
 
@@ -173,18 +217,18 @@ export default function TradingRoomTradePanel({
           </button>
         </div>
 
-        <div className={cn('mt-4 flex rounded-lg border p-0.5', border)}>
+        <div className={cn('mt-4 flex border-b', border)}>
           {(['market', 'limit', 'stop'] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setOrderTab(t)}
               className={cn(
-                'flex-1 rounded-md py-1.5 text-xs font-medium capitalize transition-colors',
+                'flex-1 pb-2 text-xs font-medium capitalize transition-colors',
                 orderTab === t
                   ? isDark
-                    ? 'bg-white/10 text-white'
-                    : 'bg-gray-200 text-gray-900'
+                    ? 'border-b-2 border-white text-white'
+                    : 'border-b-2 border-gray-900 text-gray-900'
                   : isDark
                     ? 'text-gray-500 hover:text-gray-300'
                     : 'text-gray-500 hover:text-gray-700',
@@ -207,7 +251,32 @@ export default function TradingRoomTradePanel({
               inputCls,
             )}
           />
+          <p className={cn('mt-1 text-[10px]', isDark ? 'text-gray-500' : 'text-gray-400')}>
+            Lot {lotSize} · Freeze {freezeDisplay.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </p>
         </label>
+
+        {orderTab === 'market' && (
+          <label className="mt-3 block">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">Trigger (optional)</span>
+              <span className={cn('text-[10px]', isDark ? 'text-gray-500' : 'text-gray-400')}>
+                LTP {ltp.toFixed(2)}
+              </span>
+            </div>
+            <input
+              type="number"
+              step="0.05"
+              value={optionalTrigger}
+              onChange={(e) => setOptionalTrigger(e.target.value)}
+              placeholder={String(ltp.toFixed(2))}
+              className={cn(
+                'mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500',
+                inputCls,
+              )}
+            />
+          </label>
+        )}
 
         {orderTab !== 'market' && (
           <label className="mt-3 block">
@@ -217,15 +286,64 @@ export default function TradingRoomTradePanel({
             <input
               type="number"
               step="0.05"
-              value={triggerPrice}
-              onChange={(e) => setTriggerPrice(e.target.value)}
-              placeholder={String(side === 'buy' ? ask : bid)}
+              value={orderPrice}
+              onChange={(e) => setOrderPrice(e.target.value)}
+              placeholder={String(actionPrice.toFixed(2))}
               className={cn(
                 'mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500',
                 inputCls,
               )}
             />
           </label>
+        )}
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <label className="block">
+            <span className="text-xs text-emerald-600 dark:text-emerald-400">TP</span>
+            <input
+              type="number"
+              step="0.05"
+              value={takeProfit}
+              onChange={(e) => setTakeProfit(e.target.value)}
+              placeholder="Optional"
+              className={cn(
+                'mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-500',
+                isDark
+                  ? 'border-emerald-500/40 bg-black/40 text-white placeholder:text-gray-600'
+                  : 'border-emerald-300 bg-emerald-50/50 text-gray-900 placeholder:text-gray-400',
+              )}
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs text-red-600 dark:text-red-400">SL</span>
+            <input
+              type="number"
+              step="0.05"
+              value={stopLoss}
+              onChange={(e) => setStopLoss(e.target.value)}
+              placeholder="Optional"
+              className={cn(
+                'mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-red-500',
+                isDark
+                  ? 'border-red-500/40 bg-black/40 text-white placeholder:text-gray-600'
+                  : 'border-red-300 bg-red-50/50 text-gray-900 placeholder:text-gray-400',
+              )}
+            />
+          </label>
+        </div>
+
+        {!viewOnly && instrument && (
+          <div className={cn('mt-3 space-y-0.5 text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>
+            <p>
+              Single order of {lotsNum} lot{lotsNum > 1 ? 's' : ''}
+            </p>
+            <p>
+              Margin required{' '}
+              <span className={cn('font-semibold', isDark ? 'text-white' : 'text-gray-900')}>
+                {formatCurrency(marginRequired)}
+              </span>
+            </p>
+          </div>
         )}
 
         {viewOnly && (
@@ -247,11 +365,7 @@ export default function TradingRoomTradePanel({
                 : 'bg-red-600 text-white hover:bg-red-500 disabled:opacity-60',
           )}
         >
-          {viewOnly
-            ? 'View-only instrument'
-            : submitting
-              ? 'Placing…'
-              : `${side === 'buy' ? 'Buy' : 'Sell'} ${lots} lot ${orderTab} ${formatCurrency(actionPrice)}`}
+          {submitLabel}
         </button>
       </div>
 

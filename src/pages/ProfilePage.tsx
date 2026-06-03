@@ -114,7 +114,7 @@ export default function ProfilePage() {
                 <div>
                   <h3 className="text-2xl font-semibold text-foreground">Personal details</h3>
                   <p className="text-sm text-muted-foreground">
-                    Your name and contact info as registered with Market Rush
+                    Your name and contact info as registered with tradeox
                   </p>
                 </div>
               </div>
@@ -271,7 +271,7 @@ export default function ProfilePage() {
               <h2 className="text-2xl font-semibold text-foreground">Verified Trader Status</h2>
             </div>
             <p className="mt-4 text-sm leading-7 text-foreground">
-              The <strong>Market Rush Verified Trader</strong> section becomes available automatically when you are
+              The <strong>tradeox Verified Trader</strong> section becomes available automatically when you are
               eligible to sign or update a trading contract. Eligibility is reached after meeting the required
               <strong> profit target</strong> in a validator while respecting <strong>maximum daily loss</strong> and
               <strong> maximum overall loss</strong> limits.

@@ -163,6 +163,17 @@ const CHART_SYMBOL_MAP: Record<string, string> = {
   FINNIFTY: 'NIFTY',
 }
 
+/** Default tradable symbol when opening Trading Room (matches evaluation screenshots) */
+export const DEFAULT_TRADABLE_INSTRUMENT_ID = 'eq-hdfcbank'
+
+export function getDefaultTradableInstrument(): Instrument {
+  return (
+    getInstrumentById(DEFAULT_TRADABLE_INSTRUMENT_ID) ??
+    mockInstruments.find((i) => !i.viewOnly) ??
+    mockInstruments[0]
+  )
+}
+
 export function getInstrumentById(id: string): Instrument | undefined {
   return mockInstruments.find((i) => i.id === id)
 }

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { TrendingUp, Menu, X } from 'lucide-react'
+import { Menu, X, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
-  { label: 'Markets', href: '#markets' },
-  { label: 'Features', href: '#features' },
-  { label: 'Pricing', href: '#pricing' },
+  { label: 'How it works', href: '#how-it-works' },
+  { label: 'Platform', href: '#features' },
+  { label: 'Plans', href: '#pricing' },
 ]
 
 export default function Navbar() {
@@ -24,24 +24,22 @@ export default function Navbar() {
       className={cn(
         'fixed inset-x-0 top-0 z-50 h-16 transition-all duration-300',
         scrolled
-          ? 'bg-background/80 backdrop-blur-xl border-b border-border shadow-lg'
+          ? 'border-b border-border bg-background/90 backdrop-blur-xl shadow-lg'
           : 'bg-transparent',
       )}
     >
       <nav className="mx-auto flex h-full max-w-7xl items-center justify-between px-6">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl text-foreground">
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-foreground">
           <TrendingUp className="h-6 w-6 text-primary" />
           tradeox
         </Link>
 
-        {/* Desktop center links */}
-        <ul className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map(link => (
+        <ul className="hidden items-center gap-8 md:flex">
+          {NAV_LINKS.map((link) => (
             <li key={link.label}>
               <a
                 href={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {link.label}
               </a>
@@ -49,59 +47,70 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* Desktop right buttons */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden items-center gap-3 md:flex">
           <Link
-            to="/login"
-            className="px-4 py-2 text-sm text-foreground hover:text-primary transition-colors"
+            to="/auth?tab=signin"
+            className="px-4 py-2 text-sm text-foreground transition-colors hover:text-primary"
           >
-            Log In
+            Log in
+          </Link>
+          <Link
+            to="/free-trial"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/50"
+          >
+            Free trial
           </Link>
           <Link
             to="/auth?tab=create"
-            className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white text-sm font-semibold rounded-lg transition-colors"
+            className="rounded-lg bg-[#002D5B] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#003d7a]"
           >
-            Start Free
+            Start evaluation
           </Link>
         </div>
 
-        {/* Mobile hamburger */}
         <button
-          className="md:hidden text-foreground p-2"
-          onClick={() => setMenuOpen(o => !o)}
+          type="button"
+          className="p-2 text-foreground md:hidden"
+          onClick={() => setMenuOpen((o) => !o)}
           aria-label="Toggle menu"
         >
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </nav>
 
-      {/* Mobile drawer */}
       {menuOpen && (
-        <div className="md:hidden bg-card border-b border-border px-6 py-4 flex flex-col gap-4">
-          {NAV_LINKS.map(link => (
+        <div className="flex flex-col gap-4 border-b border-border bg-card px-6 py-4 md:hidden">
+          {NAV_LINKS.map((link) => (
             <a
               key={link.label}
               href={link.href}
-              className="text-foreground text-sm py-2"
+              className="py-2 text-sm text-foreground"
               onClick={() => setMenuOpen(false)}
             >
               {link.label}
             </a>
           ))}
-          <div className="flex flex-col gap-2 pt-2 border-t border-border">
+          <div className="flex flex-col gap-2 border-t border-border pt-2">
             <Link
-              to="/login"
-              className="text-sm text-center text-foreground py-2"
+              to="/auth?tab=signin"
+              className="py-2 text-center text-sm text-foreground"
               onClick={() => setMenuOpen(false)}
             >
-              Log In
+              Log in
+            </Link>
+            <Link
+              to="/free-trial"
+              className="py-2 text-center text-sm text-foreground"
+              onClick={() => setMenuOpen(false)}
+            >
+              Free trial
             </Link>
             <Link
               to="/auth?tab=create"
-              className="text-sm text-center bg-primary text-white py-2 rounded-lg font-semibold"
+              className="rounded-lg bg-[#002D5B] py-2.5 text-center text-sm font-semibold text-white"
               onClick={() => setMenuOpen(false)}
             >
-              Start Free
+              Start evaluation
             </Link>
           </div>
         </div>

@@ -9,7 +9,10 @@ import { useThemeStore } from '@/store/themeStore'
 import { usePortfolioStore } from '@/store/portfolioStore'
 import { useMockTicker } from '@/hooks/useMockTicker'
 import type { Instrument } from '@/lib/mock/mockInstruments'
-import { getInstrumentById } from '@/lib/mock/mockInstruments'
+import {
+  DEFAULT_TRADABLE_INSTRUMENT_ID,
+  getInstrumentById,
+} from '@/lib/mock/mockInstruments'
 import { ChartPanel } from '@/components/dashboard/ChartPanel'
 import ThemeToggle from '@/components/ThemeToggle'
 import MarketsPanel from '@/components/trading/MarketsPanel'
@@ -44,6 +47,21 @@ export default function TradingRoomPage() {
   const [mobileSheet, setMobileSheet] = useState<null | { side?: 'buy' | 'sell' }>(null)
 
   useMockTicker(1500)
+
+  useEffect(() => {
+    if (!accountId) return
+    if (activeInstrumentId !== 'idx-nifty') return
+    const result = setActiveInstrument(DEFAULT_TRADABLE_INSTRUMENT_ID)
+    setChartSymbol(result.chartSymbol)
+    addToWatchlist(DEFAULT_TRADABLE_INSTRUMENT_ID)
+    addToBasket(accountId, DEFAULT_TRADABLE_INSTRUMENT_ID)
+  }, [
+    accountId,
+    activeInstrumentId,
+    setActiveInstrument,
+    addToWatchlist,
+    addToBasket,
+  ])
 
   useEffect(() => {
     setChartSymbol(getActiveChartSymbol())

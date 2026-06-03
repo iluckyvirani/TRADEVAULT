@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Loader2, Shield, Tag, Zap } from 'lucide-react'
+import { useAuthStore } from '@/store/authStore'
+import { useAffiliateStore } from '@/store/affiliateStore'
 import { useCheckoutStore } from '@/store/checkoutStore'
 import { getPlanById, mockEvaluationPlanTiers } from '@/lib/mock/mockAssessmentPlans'
 import { cn, formatCurrencyWhole } from '@/lib/utils'
@@ -16,6 +19,20 @@ export default function OrderSummarySidebar({ onPay }: Props) {
   const setAffiliateCode = useCheckoutStore((s) => s.setAffiliateCode)
   const paying = useCheckoutStore((s) => s.paying)
   const plan = getPlanById(selectedPlanId) ?? mockEvaluationPlanTiers[2]
+  const user = useAuthStore((s) => s.user)
+  const validateCode = useAffiliateStore((s) => s.validateCode)
+  const [codeHint, setCodeHint] = useState<{ valid: boolean; message: string } | null>(null)
+
+  useEffect(() => {
+    if (!affiliateCode.trim()) {
+      setCodeHint(null)
+      return
+    }
+    const t = setTimeout(() => {
+      if (user) setCodeHint(validateCode(affiliateCode, user.id))
+    }, 300)
+    return () => clearTimeout(t)
+  }, [affiliateCode, user, validateCode])
 
   return (
     <aside className="lg:sticky lg:top-6 lg:self-start">
@@ -84,11 +101,33 @@ export default function OrderSummarySidebar({ onPay }: Props) {
             <input
               type="text"
               value={affiliateCode}
-              onChange={(e) => setAffiliateCode(e.target.value)}
+              onChange={(e) => setAffiliateCode(e.target.value.toUpperCase())}
               placeholder="e.g. ABC123"
-              className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-[#002D5B]"
+              className={cn(
+                'w-full rounded-lg border bg-card py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-[#002D5B]',
+                codeHint?.valid === false && affiliateCode.trim()
+                  ? 'border-red-400'
+                  : codeHint?.valid
+                    ? 'border-emerald-500'
+                    : 'border-border',
+              )}
             />
           </div>
+          {affiliateCode.trim() && codeHint && (
+            <p
+              className={cn(
+                'mt-1 text-xs',
+                codeHint.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500',
+              )}
+            >
+              {codeHint.message}
+            </p>
+          )}
+          {!affiliateCode.trim() && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Optional — supports your affiliate partner on payment.
+            </p>
+          )}
         </label>
 
         <label className="mt-4 flex cursor-pointer items-start gap-2">

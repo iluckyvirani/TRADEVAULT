@@ -1,60 +1,55 @@
 import { Link } from 'react-router-dom'
-import { TrendingUp, Globe, Code2, Briefcase, MessageCircle } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 
-const LINKS: Record<string, string[]> = {
-  Product: ['Features', 'Pricing', 'Changelog', 'Roadmap'],
-  Company: ['About', 'Blog', 'Careers', 'Press'],
-  Legal: ['Privacy Policy', 'Terms of Service', 'Cookie Settings'],
+const LINKS: Record<string, { label: string; to: string }[]> = {
+  Platform: [
+    { label: 'Dashboard', to: '/dashboard' },
+    { label: 'Free trial', to: '/free-trial' },
+    { label: 'Start evaluation', to: '/evaluation' },
+    { label: 'Affiliate', to: '/affiliate' },
+  ],
+  Account: [
+    { label: 'Profile', to: '/profile' },
+    { label: 'Billing', to: '/billing' },
+    { label: 'Certificates', to: '/certificates' },
+    { label: 'Rewards', to: '/rewards' },
+  ],
+  Support: [
+    { label: 'Contact', to: '/contact' },
+    { label: 'Assistant', to: '/chatbot' },
+    { label: 'Sign in', to: '/auth?tab=signin' },
+    { label: 'Create account', to: '/auth?tab=create' },
+  ],
 }
-
-const SOCIALS = [
-  { Icon: Globe, label: 'Twitter / X' },
-  { Icon: Code2, label: 'GitHub' },
-  { Icon: Briefcase, label: 'LinkedIn' },
-  { Icon: MessageCircle, label: 'Discord' },
-]
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-card/20">
+    <footer className="border-t border-border bg-card/30">
       <div className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand */}
           <div>
             <Link to="/" className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
               <TrendingUp className="h-5 w-5 text-primary" />
               tradeox
             </Link>
-            <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-              The professional paper trading platform. Trade smarter. Risk nothing.
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Structured prop firm evaluation for disciplined intraday traders in Indian
+              markets. Simulated environment · transparent rules · performance-based rewards.
             </p>
-            <div className="flex gap-3">
-              {SOCIALS.map(({ Icon, label }) => (
-                <a
-                  key={label}
-                  href="#"
-                  aria-label={label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
           </div>
 
-          {/* Link columns */}
           {Object.entries(LINKS).map(([section, items]) => (
             <div key={section}>
               <h3 className="mb-4 text-sm font-semibold text-foreground">{section}</h3>
               <ul className="space-y-3">
-                {items.map(item => (
-                  <li key={item}>
-                    <a
-                      href="#"
+                {items.map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      to={item.to}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      {item}
-                    </a>
+                      {item.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -62,10 +57,12 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
-          <p>© 2026 tradeox Inc. All rights reserved.</p>
-          <p>Not financial advice. Paper trading only. For educational purposes.</p>
+          <p>© {new Date().getFullYear()} tradeox. All rights reserved.</p>
+          <p className="max-w-lg text-center sm:text-right">
+            Simulated evaluation only. Not financial advice. Not a stock broker or SEBI
+            intermediary.
+          </p>
         </div>
       </div>
     </footer>

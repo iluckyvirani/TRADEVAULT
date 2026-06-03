@@ -1,14 +1,7 @@
 export { mockUser } from './mockUser'
 export type { } from './mockUser'
 
-export { mockPortfolio } from './mockPortfolio'
-export type { Portfolio, Position } from './mockPortfolio'
-
-export { mockOrders } from './mockOrders'
 export type { Order, OrderSide, OrderType, OrderStatus, OrderTimeInForce } from './mockOrders'
-
-export { mockWatchlists } from './mockWatchlists'
-export type { Watchlist, WatchlistItem } from './mockWatchlists'
 
 export { mockQuotes } from './mockQuotes'
 export type { Quote } from './mockQuotes'
@@ -43,3 +36,45 @@ export type {
 
 export { buildMockEquityCurve } from './mockEquityCurve'
 export type { EquityPoint } from './mockEquityCurve'
+
+export {
+  mockCertificates,
+  countByCategory,
+  filterCertificates,
+} from './mockCertificates'
+export type { Certificate, CertificateCategory } from './mockCertificates'
+
+export type { BillingRecord, BillingStatus } from './mockBilling'
+
+export {
+  CONTACT_INFO,
+  FEEDBACK_CATEGORIES,
+  mockFeedbackHistory,
+} from './mockContact'
+export type {
+  FeedbackCategory,
+  FeedbackStatus,
+  FeedbackSubmission,
+} from './mockContact'
+
+export {
+  CHATBOT_TOPICS,
+  MAX_CHAT_CHARS,
+  MAX_CHAT_WORDS,
+  countWords,
+  getMockChatReply,
+} from './mockChatbot'
+export type { ChatMessage } from './mockChatbot'
+
+export {
+  AFFILIATE_COMMISSION_RATE,
+  DEMO_PARTNER_CODE,
+  MIN_PAYOUT_AMOUNT,
+  buildAffiliateCode,
+  calcCommission,
+} from './mockAffiliate'
+export type {
+  AffiliatePayout,
+  AffiliateReferral,
+  ReferralStatus,
+} from './mockAffiliate'

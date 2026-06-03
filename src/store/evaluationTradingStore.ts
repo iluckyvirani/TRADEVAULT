@@ -22,6 +22,9 @@ export interface EvaluationOrder {
   createdAt: string
   updatedAt: string
   filledAt?: string
+  triggerPrice?: number
+  takeProfitPrice?: number
+  stopLossPrice?: number
 }
 
 export interface EvaluationPosition {
@@ -45,6 +48,9 @@ interface PlaceOrderInput {
   lots: number
   limitPrice?: number
   stopPrice?: number
+  triggerPrice?: number
+  takeProfitPrice?: number
+  stopLossPrice?: number
 }
 
 interface EvaluationTradingStore {
@@ -275,6 +281,9 @@ export const useEvaluationTradingStore = create<EvaluationTradingStore>()(
           lots,
           limitPrice: input.limitPrice,
           stopPrice: input.stopPrice,
+          triggerPrice: input.triggerPrice,
+          takeProfitPrice: input.takeProfitPrice,
+          stopLossPrice: input.stopLossPrice,
           filledPrice: isMarket ? price : undefined,
           totalValue: total,
           createdAt: now,

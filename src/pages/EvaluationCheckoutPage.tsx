@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MessageCircle, Monitor, Shield } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useEvaluationAccountStore } from '@/store/evaluationAccountStore'
@@ -11,8 +12,10 @@ import TradingProgramCard from '@/components/checkout/TradingProgramCard'
 import EvaluationPlanCard from '@/components/checkout/EvaluationPlanCard'
 import OrderSummarySidebar from '@/components/checkout/OrderSummarySidebar'
 import { getPlanById } from '@/lib/mock/mockAssessmentPlans'
+import { useAffiliateStore } from '@/store/affiliateStore'
+import { useBillingStore } from '@/store/billingStore'
 import { useThemeStore } from '@/store/themeStore'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrencyWhole } from '@/lib/utils'
 
 export default function EvaluationCheckoutPage() {
   const navigate = useNavigate()
@@ -28,7 +31,17 @@ export default function EvaluationCheckoutPage() {
   const setPlanId = useCheckoutStore((s) => s.setPlanId)
   const setShowObjectives = useCheckoutStore((s) => s.setShowObjectives)
   const setPaying = useCheckoutStore((s) => s.setPaying)
+  const setAffiliateCode = useCheckoutStore((s) => s.setAffiliateCode)
+  const affiliateCode = useCheckoutStore((s) => s.affiliateCode)
   const termsAccepted = useCheckoutStore((s) => s.termsAccepted)
+  const recordReferral = useAffiliateStore((s) => s.recordReferralFromCheckout)
+  const addPayment = useBillingStore((s) => s.addPayment)
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    const ref = searchParams.get('ref')
+    if (ref) setAffiliateCode(ref.toUpperCase())
+  }, [searchParams, setAffiliateCode])
 
   async function handlePay() {
     if (!user || !termsAccepted) return
@@ -42,6 +55,28 @@ export default function EvaluationCheckoutPage() {
       stepType: selectedProgram,
       accountSize: plan.balance,
     })
+
+    addPayment({
+      userId: user.id,
+      program: `${selectedProgram} · ${formatCurrencyWhole(plan.balance)}`,
+      accountSize: plan.balance,
+      amount: plan.evaluationFee,
+      currency: 'INR',
+      status: 'paid',
+      paymentMethod: 'UPI · Mock',
+    })
+
+    if (affiliateCode.trim()) {
+      recordReferral({
+        affiliateCode,
+        buyerUserId: user.id,
+        buyerName: user.name,
+        buyerEmail: user.email,
+        orderAmount: plan.evaluationFee,
+        program: `${selectedProgram} · ${formatCurrencyWhole(plan.balance)}`,
+      })
+    }
+
     markEvaluationStarted()
     setPaying(false)
     navigate('/dashboard')
