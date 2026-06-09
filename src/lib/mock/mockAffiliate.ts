@@ -1,3 +1,4 @@
+export const REFERRAL_REWARD_AMOUNT = 500
 export const AFFILIATE_COMMISSION_RATE = 0.1
 export const DEMO_PARTNER_CODE = 'DEMO123'
 export const MIN_PAYOUT_AMOUNT = 500
@@ -30,8 +31,8 @@ export function buildAffiliateCode(userId: string, name: string): string {
   return `${slug}${suffix}`.slice(0, 12)
 }
 
-export function calcCommission(orderAmount: number): number {
-  return Math.round(orderAmount * AFFILIATE_COMMISSION_RATE)
+export function calcCommission(_orderAmount?: number): number {
+  return REFERRAL_REWARD_AMOUNT
 }
 
 export function normalizeAffiliateCode(code: string): string {

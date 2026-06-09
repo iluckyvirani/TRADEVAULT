@@ -37,13 +37,6 @@ export type {
 export { buildMockEquityCurve } from './mockEquityCurve'
 export type { EquityPoint } from './mockEquityCurve'
 
-export {
-  mockCertificates,
-  countByCategory,
-  filterCertificates,
-} from './mockCertificates'
-export type { Certificate, CertificateCategory } from './mockCertificates'
-
 export type { BillingRecord, BillingStatus } from './mockBilling'
 
 export {
@@ -58,16 +51,8 @@ export type {
 } from './mockContact'
 
 export {
-  CHATBOT_TOPICS,
-  MAX_CHAT_CHARS,
-  MAX_CHAT_WORDS,
-  countWords,
-  getMockChatReply,
-} from './mockChatbot'
-export type { ChatMessage } from './mockChatbot'
-
-export {
   AFFILIATE_COMMISSION_RATE,
+  REFERRAL_REWARD_AMOUNT,
   DEMO_PARTNER_CODE,
   MIN_PAYOUT_AMOUNT,
   buildAffiliateCode,

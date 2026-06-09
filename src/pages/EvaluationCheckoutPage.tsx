@@ -8,7 +8,6 @@ import {
   mockEvaluationPlanTiers,
   mockTradingPrograms,
 } from '@/lib/mock/mockAssessmentPlans'
-import TradingProgramCard from '@/components/checkout/TradingProgramCard'
 import EvaluationPlanCard from '@/components/checkout/EvaluationPlanCard'
 import OrderSummarySidebar from '@/components/checkout/OrderSummarySidebar'
 import { getPlanById } from '@/lib/mock/mockAssessmentPlans'
@@ -95,9 +94,10 @@ export default function EvaluationCheckoutPage() {
           <section>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h1 className={cn('text-2xl font-bold', titleCls)}>About the Evaluation</h1>
-                <p className={cn('mt-1 text-xs font-semibold uppercase tracking-wider', subCls)}>
-                  Trading programs
+                <h1 className={cn('text-2xl font-bold', titleCls)}>Evaluation Plans</h1>
+                <p className={cn('mt-2 max-w-2xl text-sm leading-relaxed', subCls)}>
+                  Choose your account size and program. Complete objectives and unlock your
+                  rewards split.
                 </p>
               </div>
               <label className="flex cursor-pointer items-center gap-2">
@@ -121,69 +121,61 @@ export default function EvaluationCheckoutPage() {
                 </button>
               </label>
             </div>
-            <p className={cn('mt-3 max-w-2xl text-sm leading-relaxed', subCls)}>
-              Choose a path to your funded account. Complete objectives and unlock your
-              rewards split.
-            </p>
 
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {mockTradingPrograms.map((prog) => (
-                <TradingProgramCard
-                  key={prog.id}
-                  program={prog}
-                  selected={selectedProgram === prog.id}
-                  showRules={showObjectives}
-                  onSelect={() => setProgram(prog.id)}
-                />
-              ))}
-            </div>
-          </section>
-
-          <section className="mt-12">
-            <h2 className={cn('text-xl font-bold', titleCls)}>Evaluation Plans</h2>
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              {mockEvaluationPlanTiers.map((plan) => (
-                <EvaluationPlanCard
-                  key={plan.id}
-                  plan={plan}
-                  selected={selectedPlanId === plan.id}
-                  onSelect={() => setPlanId(plan.id)}
-                />
-              ))}
+              {mockEvaluationPlanTiers.flatMap((plan) =>
+                mockTradingPrograms.map((program) => {
+                  const selected =
+                    selectedPlanId === plan.id && selectedProgram === program.id
+                  return (
+                    <EvaluationPlanCard
+                      key={`${plan.id}-${program.id}`}
+                      plan={plan}
+                      program={program}
+                      selected={selected}
+                      showObjectives={showObjectives}
+                      onSelect={() => {
+                        setPlanId(plan.id)
+                        setProgram(program.id)
+                      }}
+                    />
+                  )
+                }),
+              )}
             </div>
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-6 space-y-2">
               {[
                 { icon: Monitor, label: 'Platform', value: 'TradingView Web Terminal' },
                 { icon: Shield, label: 'Risk Rules', value: 'Clear daily loss & max loss rules.' },
               ].map(({ icon: Icon, label, value }) => (
                 <div
                   key={label}
-                  className={cn('flex items-center gap-3 rounded-xl border p-4', infoBar)}
+                  className={cn('flex items-center gap-2.5 rounded-xl border p-3', infoBar)}
                 >
-                  <Icon className={cn('h-5 w-5', subCls)} />
+                  <Icon className={cn('h-4 w-4 shrink-0', subCls)} />
                   <div>
-                    <p className={cn('text-xs', subCls)}>{label}</p>
-                    <p className={cn('text-sm font-medium', titleCls)}>{value}</p>
+                    <p className={cn('text-[10px]', subCls)}>{label}</p>
+                    <p className={cn('text-xs font-medium', titleCls)}>{value}</p>
                   </div>
                 </div>
               ))}
               <div
                 className={cn(
-                  'flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4',
+                  'flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3',
                   infoBar,
                 )}
               >
-                <div className="flex items-start gap-3">
-                  <MessageCircle className={cn('h-5 w-5', subCls)} />
+                <div className="flex items-start gap-2.5">
+                  <MessageCircle className={cn('h-4 w-4 shrink-0', subCls)} />
                   <div>
-                    <p className={cn('text-sm font-medium', titleCls)}>Need help?</p>
-                    <p className={cn('text-sm', subCls)}>We&apos;re here for you.</p>
+                    <p className={cn('text-xs font-medium', titleCls)}>Need help?</p>
+                    <p className={cn('text-[10px]', subCls)}>We&apos;re here for you.</p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
                 >
                   Chat
                 </button>

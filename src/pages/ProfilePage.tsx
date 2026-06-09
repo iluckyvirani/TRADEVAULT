@@ -1,26 +1,54 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   AtSign,
   CircleUserRound,
   Cog,
+  Gift,
   Lock,
   Moon,
   ShieldCheck,
   Sun,
 } from 'lucide-react'
+import ProfileReferralSection from '@/components/profile/ProfileReferralSection'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
 import { cn } from '@/lib/utils'
 
-type Tab = 'personal' | 'preferences' | 'verified'
+type Tab = 'personal' | 'preferences' | 'verified' | 'referral'
 type Channel = 'whatsapp' | 'sms' | 'call'
 
+const TAB_LABELS: Record<Tab, string> = {
+  personal: 'Personal',
+  preferences: 'Preferences',
+  verified: 'Verified Trader',
+  referral: 'Refer & Earn',
+}
+
 export default function ProfilePage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const user = useAuthStore((s) => s.user)
   const isDark = useThemeStore((s) => s.mode === 'dark')
   const setTheme = useThemeStore((s) => s.setMode)
 
-  const [tab, setTab] = useState<Tab>('personal')
+  const [tab, setTab] = useState<Tab>(() => {
+    const t = searchParams.get('tab')
+    if (t === 'referral') return 'referral'
+    return 'personal'
+  })
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'referral') setTab('referral')
+  }, [searchParams])
+
+  function selectTab(next: Tab) {
+    setTab(next)
+    if (next === 'referral') {
+      setSearchParams({ tab: 'referral' }, { replace: true })
+    } else {
+      setSearchParams({}, { replace: true })
+    }
+  }
   const [nickname, setNickname] = useState('SlyLeopard3793')
   const [displayNick, setDisplayNick] = useState('SlyLeopard3793')
   const [helpUpdates, setHelpUpdates] = useState(Boolean(user?.onboardingHelp))
@@ -40,7 +68,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-5xl p-4 md:p-6 lg:p-7">
       <p className="text-xs text-muted-foreground">
-        Home / Profile / {tab === 'personal' ? 'Personal' : tab === 'preferences' ? 'Preferences' : 'Verified Trader'}
+        Home / Profile / {TAB_LABELS[tab]}
       </p>
       <h1 className="mt-3 text-3xl font-semibold text-foreground">Profile</h1>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -52,19 +80,25 @@ export default function ProfilePage() {
           active={tab === 'personal'}
           label="Personal Info"
           icon={CircleUserRound}
-          onClick={() => setTab('personal')}
+          onClick={() => selectTab('personal')}
+        />
+        <TabBtn
+          active={tab === 'referral'}
+          label="Refer & Earn"
+          icon={Gift}
+          onClick={() => selectTab('referral')}
         />
         <TabBtn
           active={tab === 'preferences'}
           label="Preferences"
           icon={Cog}
-          onClick={() => setTab('preferences')}
+          onClick={() => selectTab('preferences')}
         />
         <TabBtn
           active={tab === 'verified'}
           label="Verified Trader"
           icon={ShieldCheck}
-          onClick={() => setTab('verified')}
+          onClick={() => selectTab('verified')}
         />
       </div>
 
@@ -263,6 +297,8 @@ export default function ProfilePage() {
             </section>
           </>
         )}
+
+        {tab === 'referral' && <ProfileReferralSection />}
 
         {tab === 'verified' && (
           <section className="rounded-2xl border border-border bg-card p-5">

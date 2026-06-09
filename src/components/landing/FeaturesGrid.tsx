@@ -2,11 +2,8 @@ import {
   LayoutDashboard,
   CandlestickChart,
   BarChart3,
-  Award,
   Gift,
-  Users,
   CreditCard,
-  MessageSquare,
   Mail,
   FileCheck,
 } from 'lucide-react'
@@ -40,29 +37,14 @@ const FEATURES: Feature[] = [
     desc: 'Choose a faster single-stage path or the full Qualifier + Validator route to prove repeatable consistency.',
   },
   {
-    Icon: Award,
-    title: 'Certificates',
-    desc: 'Earn verifiable certificates when you pass evaluation milestones — ready to share and download from your account.',
-  },
-  {
     Icon: Gift,
-    title: 'Rewards program',
-    desc: 'Unlock reward tiers and track eligibility as you progress through evaluation and funded-style reward accounts.',
-  },
-  {
-    Icon: Users,
-    title: 'Affiliate partner hub',
-    desc: 'Share your referral code, track signups and commissions, and manage payouts from a dedicated affiliate dashboard.',
+    title: 'Refer & Earn',
+    desc: 'Share your referral code, track signups and commissions, and manage payouts from your profile.',
   },
   {
     Icon: CreditCard,
     title: 'Billing & checkout',
     desc: 'Transparent INR pricing for evaluation access. View payment history and receipts in one place after checkout.',
-  },
-  {
-    Icon: MessageSquare,
-    title: 'tradeox Assistant',
-    desc: 'In-app chatbot for evaluation rules, platform help, and quick answers — without leaving your workflow.',
   },
   {
     Icon: Mail,
@@ -83,9 +65,8 @@ export default function FeaturesGrid() {
             Everything in your evaluation workspace
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            The same tools you use after signup — dashboard, trading room, stats, certificates,
-            rewards, affiliate, billing, and support — built for disciplined Indian intraday
-            trading.
+            The same tools you use after signup — dashboard, trading room, stats, referrals,
+            billing, and support — built for disciplined Indian intraday trading.
           </p>
         </div>
 

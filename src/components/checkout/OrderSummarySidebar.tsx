@@ -1,7 +1,4 @@
-import { useEffect, useState } from 'react'
 import { Loader2, Shield, Tag, Zap } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
-import { useAffiliateStore } from '@/store/affiliateStore'
 import { useCheckoutStore } from '@/store/checkoutStore'
 import { getPlanById, mockEvaluationPlanTiers } from '@/lib/mock/mockAssessmentPlans'
 import { cn, formatCurrencyWhole } from '@/lib/utils'
@@ -15,24 +12,8 @@ export default function OrderSummarySidebar({ onPay }: Props) {
   const selectedPlanId = useCheckoutStore((s) => s.selectedPlanId)
   const termsAccepted = useCheckoutStore((s) => s.termsAccepted)
   const setTermsAccepted = useCheckoutStore((s) => s.setTermsAccepted)
-  const affiliateCode = useCheckoutStore((s) => s.affiliateCode)
-  const setAffiliateCode = useCheckoutStore((s) => s.setAffiliateCode)
   const paying = useCheckoutStore((s) => s.paying)
   const plan = getPlanById(selectedPlanId) ?? mockEvaluationPlanTiers[2]
-  const user = useAuthStore((s) => s.user)
-  const validateCode = useAffiliateStore((s) => s.validateCode)
-  const [codeHint, setCodeHint] = useState<{ valid: boolean; message: string } | null>(null)
-
-  useEffect(() => {
-    if (!affiliateCode.trim()) {
-      setCodeHint(null)
-      return
-    }
-    const t = setTimeout(() => {
-      if (user) setCodeHint(validateCode(affiliateCode, user.id))
-    }, 300)
-    return () => clearTimeout(t)
-  }, [affiliateCode, user, validateCode])
 
   return (
     <aside className="lg:sticky lg:top-6 lg:self-start">
@@ -88,56 +69,18 @@ export default function OrderSummarySidebar({ onPay }: Props) {
           ))}
         </dl>
 
-        <p className="mt-3 text-center text-xs text-muted-foreground">
+        <p className="mt-3 text-center text-[10px] text-muted-foreground">
           UPI · Card · Netbanking
         </p>
-
-        <label className="mt-4 block">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Affiliate code
-          </span>
-          <div className="relative mt-1">
-            <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={affiliateCode}
-              onChange={(e) => setAffiliateCode(e.target.value.toUpperCase())}
-              placeholder="e.g. ABC123"
-              className={cn(
-                'w-full rounded-lg border bg-card py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-[#002D5B]',
-                codeHint?.valid === false && affiliateCode.trim()
-                  ? 'border-red-400'
-                  : codeHint?.valid
-                    ? 'border-emerald-500'
-                    : 'border-border',
-              )}
-            />
-          </div>
-          {affiliateCode.trim() && codeHint && (
-            <p
-              className={cn(
-                'mt-1 text-xs',
-                codeHint.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500',
-              )}
-            >
-              {codeHint.message}
-            </p>
-          )}
-          {!affiliateCode.trim() && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Optional — supports your affiliate partner on payment.
-            </p>
-          )}
-        </label>
 
         <label className="mt-4 flex cursor-pointer items-start gap-2">
           <input
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-1"
+            className="mt-0.5 h-3.5 w-3.5"
           />
-          <span className="text-xs leading-relaxed text-muted-foreground">
+          <span className="text-[10px] leading-relaxed text-muted-foreground">
             I agree to the payment &amp; service terms. Fees are non-refundable except for
             verified payment errors. See Refund Policy, Terms, and Privacy Policy.
           </span>

@@ -1,14 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
+  HelpCircle,
   Home,
   TrendingUp,
   User,
-  Users,
-  Award,
   CreditCard,
-  Star,
   Mail,
-  MessageSquare,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -25,12 +22,9 @@ const NAV_ITEMS: NavItem[] = [
   { icon: Home, label: 'Dashboard', path: '/dashboard' },
   { icon: TrendingUp, label: 'Accounts', path: '/accounts' },
   { icon: User, label: 'Profile', path: '/profile' },
-  { icon: Users, label: 'Affiliate', path: '/affiliate' },
-  { icon: Award, label: 'Certificates', path: '/certificates' },
   { icon: CreditCard, label: 'Billing', path: '/billing' },
-  { icon: Star, label: 'Rewards', path: '/rewards' },
+  { icon: HelpCircle, label: 'FAQ', path: '/faq' },
   { icon: Mail, label: 'Contact', path: '/contact' },
-  { icon: MessageSquare, label: 'Chatbot', path: '/chatbot' },
 ]
 
 interface Props {

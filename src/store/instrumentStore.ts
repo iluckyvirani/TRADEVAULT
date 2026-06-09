@@ -9,20 +9,31 @@ import {
 
 interface InstrumentStore {
   activeInstrumentId: string
-  watchlistIds: string[]
+  /** @deprecated Migrated to watchlists — kept for persist merge */
+  watchlistIds?: string[]
+  watchlists: Record<string, string[]>
+  activeWatchlistId: string
   searchOpen: boolean
   setActiveInstrument: (id: string) => { chartSymbol: string; symbol: string; viewOnly: boolean }
   setSearchOpen: (open: boolean) => void
   addToWatchlist: (id: string) => void
+  removeFromWatchlist: (id: string) => void
+  clearActiveWatchlist: () => void
+  setActiveWatchlist: (listId: string) => void
+  addWatchlist: () => string
+  getActiveWatchlistIds: () => string[]
   getActiveChartSymbol: () => string
   getActiveInstrument: () => ReturnType<typeof getInstrumentById>
 }
+
+const DEFAULT_WATCHLISTS: Record<string, string[]> = { '1': [], '2': [] }
 
 export const useInstrumentStore = create<InstrumentStore>()(
   persist(
     (set, get) => ({
       activeInstrumentId: DEFAULT_TRADABLE_INSTRUMENT_ID,
-      watchlistIds: [],
+      watchlists: { ...DEFAULT_WATCHLISTS },
+      activeWatchlistId: '1',
       searchOpen: false,
 
       setActiveInstrument: (id) => {
@@ -42,11 +53,54 @@ export const useInstrumentStore = create<InstrumentStore>()(
       setSearchOpen: (open) => set({ searchOpen: open }),
 
       addToWatchlist: (id) =>
+        set((state) => {
+          const listId = state.activeWatchlistId
+          const current = state.watchlists[listId] ?? []
+          if (current.includes(id)) return state
+          return {
+            watchlists: {
+              ...state.watchlists,
+              [listId]: [...current, id],
+            },
+          }
+        }),
+
+      removeFromWatchlist: (id) =>
+        set((state) => {
+          const listId = state.activeWatchlistId
+          const current = state.watchlists[listId] ?? []
+          return {
+            watchlists: {
+              ...state.watchlists,
+              [listId]: current.filter((x) => x !== id),
+            },
+          }
+        }),
+
+      clearActiveWatchlist: () =>
         set((state) => ({
-          watchlistIds: state.watchlistIds.includes(id)
-            ? state.watchlistIds
-            : [...state.watchlistIds, id],
+          watchlists: {
+            ...state.watchlists,
+            [state.activeWatchlistId]: [],
+          },
         })),
+
+      setActiveWatchlist: (listId) => set({ activeWatchlistId: listId }),
+
+      addWatchlist: () => {
+        const ids = Object.keys(get().watchlists)
+        const next = String(Math.max(0, ...ids.map(Number)) + 1)
+        set((state) => ({
+          watchlists: { ...state.watchlists, [next]: [] },
+          activeWatchlistId: next,
+        }))
+        return next
+      },
+
+      getActiveWatchlistIds: () => {
+        const { activeWatchlistId, watchlists } = get()
+        return watchlists[activeWatchlistId] ?? []
+      },
 
       getActiveChartSymbol: () => {
         const instrument = getInstrumentById(get().activeInstrumentId)
@@ -59,19 +113,30 @@ export const useInstrumentStore = create<InstrumentStore>()(
       name: 'tv-instruments',
       partialize: (state) => ({
         activeInstrumentId: state.activeInstrumentId,
-        watchlistIds: state.watchlistIds,
+        watchlists: state.watchlists,
+        activeWatchlistId: state.activeWatchlistId,
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<InstrumentStore> | undefined
         const id = p?.activeInstrumentId
-        if (id === 'idx-nifty') {
-          return {
-            ...current,
-            ...p,
-            activeInstrumentId: DEFAULT_TRADABLE_INSTRUMENT_ID,
-          }
+        const legacyIds = p?.watchlistIds
+        const watchlists =
+          p?.watchlists ??
+          (legacyIds?.length
+            ? { ...DEFAULT_WATCHLISTS, '1': legacyIds }
+            : current.watchlists)
+
+        const base = {
+          ...current,
+          ...p,
+          watchlists,
+          activeWatchlistId: p?.activeWatchlistId ?? '1',
         }
-        return { ...current, ...p }
+
+        if (id === 'idx-nifty') {
+          return { ...base, activeInstrumentId: DEFAULT_TRADABLE_INSTRUMENT_ID }
+        }
+        return base
       },
     },
   ),

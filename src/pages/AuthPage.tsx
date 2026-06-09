@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
@@ -6,6 +6,7 @@ import AuthLayout from '@/components/auth/AuthLayout'
 import AuthTabSwitcher, { type AuthTab } from '@/components/auth/AuthTabSwitcher'
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 import { useAuthStore } from '@/store/authStore'
+import { useCheckoutStore } from '@/store/checkoutStore'
 import { cn } from '@/lib/utils'
 
 export default function AuthPage() {
@@ -15,6 +16,8 @@ export default function AuthPage() {
 
   const register = useAuthStore((s) => s.register)
   const signIn = useAuthStore((s) => s.signIn)
+  const affiliateCode = useCheckoutStore((s) => s.affiliateCode)
+  const setAffiliateCode = useCheckoutStore((s) => s.setAffiliateCode)
 
   const [tab, setTab] = useState<AuthTab>(initialTab)
   const [email, setEmail] = useState('')
@@ -22,6 +25,13 @@ export default function AuthPage() {
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const ref = searchParams.get('ref')
+    if (ref && !affiliateCode) {
+      setAffiliateCode(ref.toUpperCase())
+    }
+  }, [searchParams, affiliateCode, setAffiliateCode])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -41,7 +51,11 @@ export default function AuthPage() {
 
     if (tab === 'create') {
       register(email)
-      navigate('/auth/complete-profile', { replace: true })
+      const ref = searchParams.get('ref')
+      const next = ref
+        ? `/auth/complete-profile?ref=${encodeURIComponent(ref)}`
+        : '/auth/complete-profile'
+      navigate(next, { replace: true })
     } else {
       signIn(email)
       navigate('/auth/loading', { replace: true })

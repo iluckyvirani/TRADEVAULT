@@ -7,7 +7,11 @@ import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { EvaluationAccount } from '@/lib/mock/mockEvaluationAccounts'
 import type { Instrument } from '@/lib/mock/mockInstruments'
-import TradingRoomTabContent from '@/components/trading/TradingRoomTabContent'
+import BasketsTabPanel from '@/components/trading/BasketsTabPanel'
+import OrdersTabPanel from '@/components/trading/OrdersTabPanel'
+import PositionsTabPanel from '@/components/trading/PositionsTabPanel'
+import WatchTabPanel from '@/components/trading/WatchTabPanel'
+import { useInstrumentStore } from '@/store/instrumentStore'
 
 type OrderTab = 'market' | 'limit' | 'stop'
 
@@ -59,6 +63,7 @@ export default function TradingRoomTradePanel({
   const [submitting, setSubmitting] = useState(false)
 
   const isDark = useThemeStore((s) => s.mode === 'dark')
+  const activeInstrumentId = useInstrumentStore((s) => s.activeInstrumentId)
   const activeTab = useTradingRoomStore((s) => s.activeTab)
   const setActiveTab = useTradingRoomStore((s) => s.setActiveTab)
   const showToast = useTradingRoomStore((s) => s.showToast)
@@ -370,12 +375,23 @@ export default function TradingRoomTradePanel({
       </div>
 
       <div className={cn('min-h-0 flex-1 overflow-hidden border-t', border)}>
-        <TradingRoomTabContent
-          accountId={account.id}
-          tab={activeTab}
-          onSelectInstrument={onSelectInstrument}
-          onOpenSearch={onOpenSearch}
-        />
+        {activeTab === 'watch' ? (
+          <WatchTabPanel
+            activeInstrumentId={activeInstrumentId}
+            onOpenSearch={onOpenSearch}
+            onSelectInstrument={onSelectInstrument}
+          />
+        ) : activeTab === 'baskets' ? (
+          <BasketsTabPanel
+            accountId={account.id}
+            activeInstrumentId={activeInstrumentId}
+            onSelectInstrument={onSelectInstrument}
+          />
+        ) : activeTab === 'orders' ? (
+          <OrdersTabPanel accountId={account.id} />
+        ) : (
+          <PositionsTabPanel accountId={account.id} />
+        )}
       </div>
 
       <div className={cn('flex flex-shrink-0 border-t', border)}>

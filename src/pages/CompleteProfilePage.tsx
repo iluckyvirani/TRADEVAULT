@@ -1,21 +1,48 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { FormEvent } from 'react'
+import { Tag } from 'lucide-react'
 import AuthLayout from '@/components/auth/AuthLayout'
 import { useAuthStore, type ProfileTitle } from '@/store/authStore'
+import { useAffiliateStore } from '@/store/affiliateStore'
+import { useCheckoutStore } from '@/store/checkoutStore'
 import { cn } from '@/lib/utils'
 
 const TITLES: ProfileTitle[] = ['Mr.', 'Ms.', 'Mrs.', 'Dr.']
 
 export default function CompleteProfilePage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const user = useAuthStore((s) => s.user)
   const completeProfile = useAuthStore((s) => s.completeProfile)
+  const affiliateCode = useCheckoutStore((s) => s.affiliateCode)
+  const setAffiliateCode = useCheckoutStore((s) => s.setAffiliateCode)
+  const validateCode = useAffiliateStore((s) => s.validateCode)
 
   const [title, setTitle] = useState<ProfileTitle>('Mr.')
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [onboardingHelp, setOnboardingHelp] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [codeHint, setCodeHint] = useState<{ valid: boolean; message: string } | null>(null)
+
+  useEffect(() => {
+    const ref = searchParams.get('ref')
+    if (ref && !affiliateCode) {
+      setAffiliateCode(ref.toUpperCase())
+    }
+  }, [searchParams, affiliateCode, setAffiliateCode])
+
+  useEffect(() => {
+    if (!affiliateCode.trim()) {
+      setCodeHint(null)
+      return
+    }
+    const t = setTimeout(() => {
+      if (user) setCodeHint(validateCode(affiliateCode, user.id))
+    }, 300)
+    return () => clearTimeout(t)
+  }, [affiliateCode, user, validateCode])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -86,6 +113,43 @@ export default function CompleteProfilePage() {
               className="flex-1 px-3 text-sm text-gray-900 outline-none"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            Referral code <span className="font-normal text-gray-400">(optional)</span>
+          </label>
+          <div className="relative">
+            <Tag className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={affiliateCode}
+              onChange={(e) => setAffiliateCode(e.target.value.toUpperCase())}
+              placeholder="e.g. ABC123"
+              className={cn(
+                'h-11 w-full rounded-lg border px-3 pl-9 text-sm text-gray-900 outline-none focus:ring-1',
+                codeHint?.valid === false && affiliateCode.trim()
+                  ? 'border-red-400 focus:border-red-400 focus:ring-red-400'
+                  : codeHint?.valid
+                    ? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500'
+                    : 'border-gray-300 focus:border-[#002D5B] focus:ring-[#002D5B]',
+              )}
+            />
+          </div>
+          {affiliateCode.trim() && codeHint ? (
+            <p
+              className={cn(
+                'mt-1 text-xs',
+                codeHint.valid ? 'text-emerald-600' : 'text-red-500',
+              )}
+            >
+              {codeHint.message}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-gray-400">
+              Have a referral link? Enter the code here — it will be applied at checkout.
+            </p>
+          )}
         </div>
 
         <div className="rounded-lg border border-gray-200 p-4">

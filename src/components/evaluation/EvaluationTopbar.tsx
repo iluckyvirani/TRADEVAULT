@@ -9,12 +9,9 @@ const BREADCRUMB_MAP: Record<string, string> = {
   dashboard: 'Dashboard',
   accounts: 'Account Manager',
   profile: 'Profile',
-  affiliate: 'Affiliate',
-  certificates: 'Certificates',
   billing: 'Billing',
-  rewards: 'Rewards',
+  faq: 'FAQ',
   contact: 'Contact',
-  chatbot: 'Chatbot',
   evaluation: 'Evaluation',
   'free-trial': 'Free Trial',
 }

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AuthGuard, { GuestGuard, RegistrationGuard } from '@/components/auth/AuthGuard'
 import EvaluationShell from '@/components/evaluation/EvaluationShell'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
@@ -19,12 +19,19 @@ const TradingRoomPage       = lazy(() => import('@/pages/TradingRoomPage'))
 const EvaluationCheckoutPage = lazy(() => import('@/pages/EvaluationCheckoutPage'))
 const FreeTrialPage = lazy(() => import('@/pages/FreeTrialPage'))
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
-const CertificatesPage = lazy(() => import('@/pages/CertificatesPage'))
 const BillingPage = lazy(() => import('@/pages/BillingPage'))
-const RewardsPage = lazy(() => import('@/pages/RewardsPage'))
 const ContactPage = lazy(() => import('@/pages/ContactPage'))
-const ChatbotPage = lazy(() => import('@/pages/ChatbotPage'))
-const AffiliatePage = lazy(() => import('@/pages/AffiliatePage'))
+const FaqPage = lazy(() => import('@/pages/FaqPage'))
+
+function SignupRedirect() {
+  const { search } = useLocation()
+  const params = new URLSearchParams(search)
+  const ref = params.get('ref')
+  const target = ref
+    ? `/auth?tab=create&ref=${encodeURIComponent(ref)}`
+    : '/auth?tab=create'
+  return <Navigate to={target} replace />
+}
 
 function AppPageFallback() {
   return (
@@ -56,10 +63,7 @@ export default function App() {
               </Suspense>
             }
           />
-          <Route
-            path="/signup"
-            element={<Navigate to="/auth?tab=create" replace />}
-          />
+          <Route path="/signup" element={<SignupRedirect />} />
           <Route
             path="/login"
             element={<Navigate to="/auth?tab=signin" replace />}
@@ -146,12 +150,13 @@ export default function App() {
             <Route path="/evaluation" element={<Suspense fallback={<AppPageFallback />}><EvaluationCheckoutPage /></Suspense>} />
             <Route path="/free-trial" element={<Suspense fallback={<AppPageFallback />}><FreeTrialPage /></Suspense>} />
             <Route path="/profile" element={<Suspense fallback={<AppPageFallback />}><ProfilePage /></Suspense>} />
-            <Route path="/affiliate" element={<Suspense fallback={<AppPageFallback />}><AffiliatePage /></Suspense>} />
-            <Route path="/certificates" element={<Suspense fallback={<AppPageFallback />}><CertificatesPage /></Suspense>} />
+            <Route path="/affiliate" element={<Navigate to="/profile?tab=referral" replace />} />
             <Route path="/billing" element={<Suspense fallback={<AppPageFallback />}><BillingPage /></Suspense>} />
-            <Route path="/rewards" element={<Suspense fallback={<AppPageFallback />}><RewardsPage /></Suspense>} />
+            <Route path="/faq" element={<Suspense fallback={<AppPageFallback />}><FaqPage /></Suspense>} />
             <Route path="/contact" element={<Suspense fallback={<AppPageFallback />}><ContactPage /></Suspense>} />
-            <Route path="/chatbot" element={<Suspense fallback={<AppPageFallback />}><ChatbotPage /></Suspense>} />
+            <Route path="/certificates" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/rewards" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/chatbot" element={<Navigate to="/dashboard" replace />} />
             {/* Legacy broker routes */}
             <Route path="/trade" element={<Navigate to="/dashboard" replace />} />
             <Route path="/trade/:symbol" element={<Navigate to="/dashboard" replace />} />
