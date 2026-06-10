@@ -1,0 +1,21 @@
+{
+  "name": "tradeox-api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"API not implemented yet — see docs/BACKEND_DEVELOPMENT.md\"",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:validate": "prisma validate",
+    "db:push": "prisma db push"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  },
+  "devDependencies": {
+    "prisma": "^6.19.3",
+    "typescript": "~6.0.2"
+  }
+}

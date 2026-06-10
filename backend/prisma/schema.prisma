@@ -1,0 +1,431 @@
+// tradeox — Neon PostgreSQL schema
+// Docs: backend/docs/BACKEND_DEVELOPMENT.md
+// Run from backend/: npm run db:migrate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums (mirror ../src/store + ../src/lib/mock types) ─────────────────────
+
+enum RegistrationStep {
+  registered
+  profile_completed
+  email_verified
+  evaluation_started
+}
+
+enum ProfileTitle {
+  Mr  @map("Mr.")
+  Ms  @map("Ms.")
+  Mrs @map("Mrs.")
+  Dr  @map("Dr.")
+}
+
+enum CommChannel {
+  whatsapp
+  sms
+  call
+}
+
+enum AccountPlan {
+  free_trial
+  paid
+}
+
+enum AccountStatus {
+  active
+  failed
+  passed
+  paused
+}
+
+enum EvaluationStepType {
+  STEP_1 @map("1-Step")
+  STEP_2 @map("2-Step")
+}
+
+enum OrderSide {
+  buy
+  sell
+}
+
+enum OrderType {
+  market
+  limit
+  stop
+}
+
+enum OrderStatus {
+  open
+  filled
+  cancelled
+  rejected
+}
+
+enum ReferralStatus {
+  pending
+  approved
+  paid
+}
+
+enum PayoutStatus {
+  processing
+  completed
+}
+
+enum BillingStatus {
+  paid
+  pending
+  failed
+  refunded
+}
+
+enum FeedbackCategory {
+  general
+  bug
+  feature
+  billing
+  other
+}
+
+enum FeedbackStatus {
+  open
+  in_review
+  resolved
+}
+
+enum BasketSizeMode {
+  contracts
+  lots
+}
+
+enum ThemeMode {
+  light
+  dark
+}
+
+// ─── Auth & users ────────────────────────────────────────────────────────────
+
+model User {
+  id                 String            @id @default(cuid())
+  email              String            @unique
+  passwordHash       String?
+  name               String
+  title              ProfileTitle?
+  phone              String?
+  avatar             String            @default("av1")
+  currency           String            @default("INR")
+  registrationStep   RegistrationStep?
+  onboardingComplete Boolean           @default(false)
+  emailVerifiedAt    DateTime?
+  failedAttempts     Int               @default(0)
+  lockedUntil        DateTime?
+  pendingAffiliateCode String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  preferences        UserPreferences?
+  refreshTokens      RefreshToken[]
+  emailVerifications EmailVerificationToken[]
+  affiliateProfile   AffiliateProfile?
+  evaluationAccounts EvaluationAccount[]
+  billingRecords     BillingRecord[]
+  feedback           FeedbackSubmission[]
+  watchlists         Watchlist[]
+
+  referralsMade    Referral[]        @relation("ReferrerUser")
+  referralsAsBuyer Referral[]        @relation("BuyerUser")
+  payouts          AffiliatePayout[]
+
+  @@index([registrationStep])
+}
+
+model UserPreferences {
+  id               String      @id @default(cuid())
+  userId           String      @unique
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nickname         String?
+  theme            ThemeMode   @default(light)
+  onboardingHelp   Boolean     @default(false)
+  commChannel      CommChannel @default(whatsapp)
+  killSwitchActive Boolean     @default(false)
+  updatedAt        DateTime    @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// ─── Affiliate / Refer & Earn ────────────────────────────────────────────────
+
+model AffiliateProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([code])
+}
+
+model Referral {
+  id               String         @id @default(cuid())
+  affiliateUserId  String
+  affiliateUser    User           @relation("ReferrerUser", fields: [affiliateUserId], references: [id])
+  buyerUserId      String?
+  buyerUser        User?          @relation("BuyerUser", fields: [buyerUserId], references: [id])
+  referredName     String
+  referredEmail    String
+  program          String
+  orderAmount      Decimal        @db.Decimal(12, 2)
+  commissionAmount Decimal        @db.Decimal(12, 2)
+  status           ReferralStatus @default(pending)
+  billingRecordId  String?
+  billingRecord    BillingRecord? @relation(fields: [billingRecordId], references: [id])
+  createdAt        DateTime       @default(now())
+
+  @@index([affiliateUserId, createdAt])
+  @@index([referredEmail])
+}
+
+model AffiliatePayout {
+  id              String       @id @default(cuid())
+  affiliateUserId String
+  affiliateUser   User         @relation(fields: [affiliateUserId], references: [id])
+  amount          Decimal      @db.Decimal(12, 2)
+  status          PayoutStatus @default(processing)
+  createdAt       DateTime     @default(now())
+
+  @@index([affiliateUserId])
+}
+
+// ─── Evaluation accounts ─────────────────────────────────────────────────────
+
+model EvaluationAccount {
+  id                   String             @id
+  userId               String
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                 AccountPlan
+  status               AccountStatus      @default(active)
+  stepType             EvaluationStepType
+  accountSize          Decimal            @db.Decimal(14, 2)
+  balance              Decimal            @db.Decimal(14, 2)
+  equity               Decimal            @db.Decimal(14, 2)
+  unrealizedPnL        Decimal            @db.Decimal(14, 2) @default(0)
+  todayPnL             Decimal            @db.Decimal(14, 2) @default(0)
+  freeMargin           Decimal            @db.Decimal(14, 2)
+  marginUsed           Decimal            @db.Decimal(14, 2) @default(0)
+  maxLoss              Decimal            @db.Decimal(14, 2)
+  dailyMaxLoss         Decimal            @db.Decimal(14, 2)
+  profitTarget         Decimal            @db.Decimal(14, 2)
+  minTradingDays       Int                @default(4)
+  tradingDaysCompleted Int                @default(0)
+  rolloverProfit       Decimal            @db.Decimal(14, 2) @default(0)
+  labels               String[]           @default([])
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  orders         EvaluationOrder[]
+  positions      EvaluationPosition[]
+  baskets        TradingBasket[]
+  equityCurve    EquityCurvePoint[]
+  billingRecords BillingRecord[]
+  tradingConfig  AccountTradingConfig?
+
+  @@index([userId, status])
+}
+
+model EquityCurvePoint {
+  id          String            @id @default(cuid())
+  accountId   String
+  account     EvaluationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  ts          DateTime
+  equity      Decimal           @db.Decimal(14, 2)
+  balance     Decimal           @db.Decimal(14, 2)
+  drawdownPct Decimal?          @db.Decimal(8, 4)
+
+  @@index([accountId, ts])
+}
+
+model EvaluationOrder {
+  id              String            @id
+  accountId       String
+  account         EvaluationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  instrumentId    String
+  instrument      Instrument        @relation(fields: [instrumentId], references: [id])
+  symbol          String
+  name            String
+  side            OrderSide
+  type            OrderType
+  status          OrderStatus
+  lots            Int
+  limitPrice      Decimal?          @db.Decimal(12, 4)
+  stopPrice       Decimal?          @db.Decimal(12, 4)
+  triggerPrice    Decimal?          @db.Decimal(12, 4)
+  takeProfitPrice Decimal?          @db.Decimal(12, 4)
+  stopLossPrice   Decimal?          @db.Decimal(12, 4)
+  filledPrice     Decimal?          @db.Decimal(12, 4)
+  totalValue      Decimal           @db.Decimal(14, 2)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  filledAt        DateTime?
+
+  @@index([accountId, status, createdAt])
+  @@index([symbol, status])
+}
+
+model EvaluationPosition {
+  id            String            @id @default(cuid())
+  accountId     String
+  account       EvaluationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  instrumentId  String
+  instrument    Instrument        @relation(fields: [instrumentId], references: [id])
+  symbol        String
+  name          String
+  lots          Int
+  avgEntry      Decimal           @db.Decimal(12, 4)
+  ltp           Decimal           @db.Decimal(12, 4)
+  unrealizedPnL Decimal           @db.Decimal(14, 2)
+  openedAt      DateTime          @default(now())
+
+  @@unique([accountId, instrumentId])
+  @@index([accountId])
+}
+
+model TradingBasket {
+  id            String            @id @default(cuid())
+  accountId     String
+  account       EvaluationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  name          String
+  sortOrder     Int               @default(0)
+  instrumentIds String[]          @default([])
+  createdAt     DateTime          @default(now())
+
+  @@index([accountId])
+}
+
+model AccountTradingConfig {
+  id             String            @id @default(cuid())
+  accountId      String            @unique
+  account        EvaluationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  activeBasketId String?
+  basketSizeMode BasketSizeMode    @default(lots)
+}
+
+model Instrument {
+  id          String    @id
+  symbol      String
+  exchange    String
+  segment     String?
+  displayName String
+  lotSize     Int       @default(1)
+  tickSize    Decimal?  @db.Decimal(12, 4)
+  expiry      DateTime?
+  strike      Decimal?  @db.Decimal(12, 4)
+  optionType  String?
+  viewOnly    Boolean   @default(false)
+  chartSymbol String
+  isTradable  Boolean   @default(true)
+  updatedAt   DateTime  @updatedAt
+
+  orders    EvaluationOrder[]
+  positions EvaluationPosition[]
+
+  @@unique([symbol, exchange])
+  @@index([symbol])
+}
+
+model Watchlist {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String          @default("Watchlist")
+  sortOrder Int             @default(0)
+  items     WatchlistItem[]
+  createdAt DateTime        @default(now())
+
+  @@index([userId])
+}
+
+model WatchlistItem {
+  id           String    @id @default(cuid())
+  watchlistId  String
+  watchlist    Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  instrumentId String
+  sortOrder    Int       @default(0)
+
+  @@unique([watchlistId, instrumentId])
+}
+
+model BillingRecord {
+  id                String             @id @default(cuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id])
+  accountId         String?
+  account           EvaluationAccount? @relation(fields: [accountId], references: [id])
+  program           String
+  accountSize       Decimal            @db.Decimal(14, 2)
+  amount            Decimal            @db.Decimal(12, 2)
+  currency          String             @default("INR")
+  status            BillingStatus      @default(paid)
+  paymentMethod     String?
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  paidAt            DateTime           @default(now())
+
+  referrals Referral[]
+
+  @@index([userId, paidAt])
+}
+
+model FeedbackSubmission {
+  id        String           @id @default(cuid())
+  userId    String?
+  user      User?            @relation(fields: [userId], references: [id])
+  category  FeedbackCategory
+  message   String
+  status    FeedbackStatus   @default(open)
+  createdAt DateTime         @default(now())
+}
+
+model FaqItem {
+  id        String  @id @default(cuid())
+  category  String
+  question  String
+  answer    String  @db.Text
+  sortOrder Int     @default(0)
+  published Boolean @default(true)
+}
+
+model EvaluationPlanTier {
+  id            String  @id
+  balance       Decimal @db.Decimal(14, 2)
+  evaluationFee Decimal @db.Decimal(12, 2)
+  originalFee   Decimal @db.Decimal(12, 2)
+  savings       Decimal @db.Decimal(12, 2)
+  popular       Boolean @default(false)
+  active        Boolean @default(true)
+}
