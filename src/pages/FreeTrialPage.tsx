@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Check, Monitor, MessageCircle, Star } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useEvaluationAccountStore } from '@/store/evaluationAccountStore'
-import type { EvaluationStep } from '@/lib/mock/mockEvaluationAccounts'
+import { DEFAULT_EVALUATION_OBJECTIVES } from '@/lib/plans/objectives'
+import { objectivesToRows } from '@/lib/plans/objectives'
 import { cn, formatCurrencyWhole } from '@/lib/utils'
 
 const BALANCE_TIERS = [
@@ -13,45 +14,33 @@ const BALANCE_TIERS = [
   { id: '25L', size: 2_500_000, popular: false },
 ] as const
 
-const PROGRAMS: {
-  step: EvaluationStep
-  title: string
-  rules: string[]
-}[] = [
-  {
-    step: '1-Step',
-    title: '1-Step',
-    rules: [
-      'EOD Trailing Drawdown',
-      '3% Daily Loss',
-      '10% Max Loss (EOD)',
-    ],
-  },
-  {
-    step: '2-Step',
-    title: '2-Step',
-    rules: [
-      'Fixed Drawdown',
-      '5% Daily Loss',
-      '10% Max Loss (Static)',
-    ],
-  },
-]
-
 export default function FreeTrialPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const markEvaluationStarted = useAuthStore((s) => s.markEvaluationStarted)
+  const setSession = useAuthStore((s) => s.setSession)
   const createFreeTrial = useEvaluationAccountStore((s) => s.createFreeTrial)
 
-  const [stepType, setStepType] = useState<EvaluationStep>('2-Step')
   const [accountSize, setAccountSize] = useState(1_000_000)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  function handleStart() {
+  async function handleStart() {
     if (!user) return
-    createFreeTrial(user.id, { stepType, accountSize })
-    markEvaluationStarted()
-    navigate('/dashboard')
+    setLoading(true)
+    setError('')
+    try {
+      await createFreeTrial(accountSize)
+      setSession({
+        user,
+        registrationStep: 'evaluation_started',
+        onboardingComplete: true,
+      })
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start free trial')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -66,50 +55,23 @@ export default function FreeTrialPage() {
           </p>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Free Trial accounts are not eligible for Rewards Accounts. When you are ready for a
-            formal evaluation, choose a paid assessment path from the dashboard.
+            formal evaluation, choose a paid plan from the dashboard.
           </p>
 
           <h2 className="mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Program
+            Evaluation objectives
           </h2>
-          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {PROGRAMS.map((prog) => {
-              const selected = stepType === prog.step
-              return (
-                <button
-                  key={prog.step}
-                  type="button"
-                  onClick={() => setStepType(prog.step)}
-                  className={cn(
-                    'relative rounded-2xl border p-5 text-left transition-all',
-                    selected
-                      ? 'border-[#002D5B] bg-[#002D5B] text-white shadow-md'
-                      : 'border-border bg-card text-foreground hover:border-muted-foreground/40',
-                  )}
-                >
-                  {selected && (
-                    <span className="absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full bg-white">
-                      <Check className="h-3 w-3 text-[#002D5B]" />
-                    </span>
-                  )}
-                  <h3 className="text-lg font-bold">{prog.title}</h3>
-                  <ul className="mt-3 space-y-1.5">
-                    {prog.rules.map((rule) => (
-                      <li
-                        key={rule}
-                        className={cn(
-                          'text-sm',
-                          selected ? 'text-blue-100' : 'text-muted-foreground',
-                        )}
-                      >
-                        {rule}
-                      </li>
-                    ))}
-                  </ul>
-                </button>
-              )
-            })}
-          </div>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {objectivesToRows(DEFAULT_EVALUATION_OBJECTIVES).map((row) => (
+              <li
+                key={row.label}
+                className="flex justify-between gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm"
+              >
+                <span className="text-muted-foreground">{row.label}</span>
+                <span className="font-medium text-foreground">{row.value}</span>
+              </li>
+            ))}
+          </ul>
 
           <h2 className="mt-8 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Account Balance
@@ -155,14 +117,6 @@ export default function FreeTrialPage() {
                     )}
                   >
                     Free
-                  </p>
-                  <p
-                    className={cn(
-                      'text-xs',
-                      selected ? 'text-blue-200' : 'text-muted-foreground',
-                    )}
-                  >
-                    Without risking
                   </p>
                 </button>
               )
@@ -214,10 +168,6 @@ export default function FreeTrialPage() {
 
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Program</dt>
-                <dd className="font-medium text-foreground">{stepType}</dd>
-              </div>
-              <div className="flex justify-between">
                 <dt className="text-muted-foreground">Trading Account Currency</dt>
                 <dd className="font-medium text-foreground">INR</dd>
               </div>
@@ -232,12 +182,17 @@ export default function FreeTrialPage() {
               <span className="text-lg font-bold text-green-600">Free</span>
             </div>
 
+            {error && (
+              <p className="mt-3 text-center text-xs text-red-600">{error}</p>
+            )}
+
             <button
               type="button"
               onClick={handleStart}
-              className="mt-4 w-full rounded-xl bg-[#002D5B] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#003d7a]"
+              disabled={loading}
+              className="mt-4 w-full rounded-xl bg-[#002D5B] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#003d7a] disabled:opacity-70"
             >
-              Start Free Trial
+              {loading ? 'Creating account…' : 'Start Free Trial'}
             </button>
 
             <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground">

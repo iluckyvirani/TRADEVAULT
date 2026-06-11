@@ -1,6 +1,5 @@
-import { useMemo } from 'react'
-import { useAuthStore } from '@/store/authStore'
-import { useBillingStore } from '@/store/billingStore'
+import { Loader2 } from 'lucide-react'
+import { useBilling } from '@/hooks/useBilling'
 import { cn, formatCurrency } from '@/lib/utils'
 
 const STATUS_STYLES: Record<string, string> = {
@@ -11,17 +10,7 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 export default function BillingPage() {
-  const userId = useAuthStore((s) => s.user?.id)
-  const allRecords = useBillingStore((s) => s.records)
-  const records = useMemo(
-    () =>
-      userId
-        ? allRecords
-            .filter((r) => r.userId === userId)
-            .sort((a, b) => b.date.localeCompare(a.date))
-        : [],
-    [allRecords, userId],
-  )
+  const { records, loading, error } = useBilling()
 
   return (
     <div className="mx-auto max-w-5xl p-4 md:p-6 lg:p-7">
@@ -32,7 +21,15 @@ export default function BillingPage() {
         View and manage your evaluation payment records.
       </p>
 
-      {records.length === 0 ? (
+      {loading ? (
+        <div className="mt-8 flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center dark:border-red-900/50 dark:bg-red-950/30">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      ) : records.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-border bg-card px-6 py-20 text-center shadow-sm">
           <p className="text-sm text-muted-foreground">
             No billing history yet. Your payments will appear here once you make a purchase.

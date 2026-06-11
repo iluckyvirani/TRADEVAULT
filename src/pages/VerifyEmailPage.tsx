@@ -3,16 +3,20 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Mail } from 'lucide-react'
 import AuthLayout from '@/components/auth/AuthLayout'
 import { useAuthStore } from '@/store/authStore'
+import { ApiError } from '@/lib/api/client'
+import * as authApi from '@/lib/api/auth'
 import { cn } from '@/lib/utils'
 
 const RESEND_SECONDS = 60
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate()
-  const verifyEmail = useAuthStore((s) => s.verifyEmail)
+  const setSession = useAuthStore((s) => s.setSession)
   const user = useAuthStore((s) => s.user)
 
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS)
+  const [verifying, setVerifying] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (secondsLeft <= 0) return
@@ -20,14 +24,29 @@ export default function VerifyEmailPage() {
     return () => clearInterval(id)
   }, [secondsLeft])
 
-  function handleVerifyNow() {
-    verifyEmail()
-    navigate('/auth/loading', { replace: true })
+  async function handleVerifyNow() {
+    setVerifying(true)
+    setError('')
+    try {
+      const session = await authApi.verifyEmail()
+      setSession(session)
+      navigate('/auth/loading', { replace: true })
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Verification failed')
+    } finally {
+      setVerifying(false)
+    }
   }
 
-  function handleResend() {
+  async function handleResend() {
     if (secondsLeft > 0) return
-    setSecondsLeft(RESEND_SECONDS)
+    setError('')
+    try {
+      await authApi.resendVerification()
+      setSecondsLeft(RESEND_SECONDS)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not resend email')
+    }
   }
 
   return (
@@ -57,12 +76,15 @@ export default function VerifyEmailPage() {
           </ul>
         </div>
 
+        {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
         <button
           type="button"
           onClick={handleVerifyNow}
-          className="mb-2 w-full rounded-lg bg-[#002D5B] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#001f3f]"
+          disabled={verifying}
+          className="mb-2 w-full rounded-lg bg-[#002D5B] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#001f3f] disabled:opacity-70"
         >
-          I&apos;ve verified my email
+          {verifying ? 'Verifying…' : "I've verified my email"}
         </button>
         <p className="mb-6 text-center text-xs text-gray-400">
           Demo mode — no real email is sent. Click above to continue.

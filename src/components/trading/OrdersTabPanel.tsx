@@ -134,7 +134,7 @@ export default function OrdersTabPanel({ accountId }: Props) {
                 key={order.id}
                 order={order}
                 theme={t}
-                onCancel={() => cancelOrder(order.id)}
+                onCancel={() => void cancelOrder(accountId, order.id)}
               />
             ))}
           </ul>

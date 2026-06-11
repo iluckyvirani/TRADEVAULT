@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { mockQuotes } from '@/lib/mock'
+import { usePortfolioStore } from '@/store/portfolioStore'
 import { useEvaluationTradingStore } from '@/store/evaluationTradingStore'
 import { useTradingRoomStore, type RoomTab } from '@/store/tradingRoomStore'
 import { useThemeStore } from '@/store/themeStore'
@@ -68,12 +68,12 @@ export default function TradingRoomTradePanel({
   const setActiveTab = useTradingRoomStore((s) => s.setActiveTab)
   const showToast = useTradingRoomStore((s) => s.showToast)
   const placeOrder = useEvaluationTradingStore((s) => s.placeOrder)
+  const liveQuote = usePortfolioStore((s) => s.liveQuotes[symbol])
 
-  const quote = mockQuotes[symbol]
-  const name = instrument?.displayName ?? quote?.name ?? symbol
-  const bid = instrument?.bid ?? quote?.price ?? 23350.95
-  const ask = instrument?.ask ?? quote?.price ?? 23350.95
-  const ltp = instrument?.lastPrice ?? quote?.price ?? (bid + ask) / 2
+  const name = instrument?.displayName ?? liveQuote?.name ?? symbol
+  const bid = liveQuote?.price != null ? liveQuote.price - 0.05 : (instrument?.bid ?? 0)
+  const ask = liveQuote?.price != null ? liveQuote.price + 0.05 : (instrument?.ask ?? 0)
+  const ltp = liveQuote?.price ?? instrument?.lastPrice ?? (bid + ask) / 2
 
   const border = isDark ? 'border-white/10' : 'border-gray-200'
   const panelBg = isDark ? 'bg-[#0f1115]' : 'bg-white'
@@ -122,37 +122,39 @@ export default function TradingRoomTradePanel({
     }
 
     setSubmitting(true)
-    await new Promise((r) => setTimeout(r, 300))
+    try {
+      const order = await placeOrder({
+        accountId: account.id,
+        instrument,
+        side,
+        type: orderTab,
+        lots: lotsNum,
+        limitPrice,
+        stopPrice,
+        triggerPrice,
+        takeProfitPrice,
+        stopLossPrice,
+      })
 
-    const order = placeOrder({
-      accountId: account.id,
-      instrument,
-      side,
-      type: orderTab,
-      lots: lotsNum,
-      limitPrice,
-      stopPrice,
-      triggerPrice,
-      takeProfitPrice,
-      stopLossPrice,
-    })
+      if (order.status === 'rejected') {
+        showToast('Order rejected — check margin or position')
+        setActiveTab('orders')
+        return
+      }
 
-    setSubmitting(false)
-
-    if (order.status === 'rejected') {
-      showToast('Order rejected — check margin or position')
-      setActiveTab('orders')
-      return
-    }
-
-    if (order.status === 'filled') {
-      showToast(
-        `${side.toUpperCase()} ${lotsNum} lot filled @ ${formatCurrency(order.filledPrice ?? ask)}`,
-      )
-      setActiveTab('positions')
-    } else {
-      showToast(`${side.toUpperCase()} ${lotsNum} lot ${order.type} order placed`)
-      setActiveTab('orders')
+      if (order.status === 'filled') {
+        showToast(
+          `${side.toUpperCase()} ${lotsNum} lot filled @ ${formatCurrency(order.filledPrice ?? ask)}`,
+        )
+        setActiveTab('positions')
+      } else {
+        showToast(`${side.toUpperCase()} ${lotsNum} lot ${order.type} order placed`)
+        setActiveTab('orders')
+      }
+    } catch {
+      showToast('Failed to place order')
+    } finally {
+      setSubmitting(false)
     }
   }
 

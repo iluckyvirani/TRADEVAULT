@@ -7,7 +7,6 @@ import { useInstrumentStore } from '@/store/instrumentStore'
 import { useTradingRoomStore } from '@/store/tradingRoomStore'
 import { useThemeStore } from '@/store/themeStore'
 import { usePortfolioStore } from '@/store/portfolioStore'
-import { useMockTicker } from '@/hooks/useMockTicker'
 import type { Instrument } from '@/lib/mock/mockInstruments'
 import {
   DEFAULT_TRADABLE_INSTRUMENT_ID,
@@ -37,8 +36,8 @@ export default function TradingRoomPage() {
   const getActiveChartSymbol = useInstrumentStore((s) => s.getActiveChartSymbol)
 
   const addToBasket = useEvaluationTradingStore((s) => s.addToBasket)
+  const hydrateTrading = useEvaluationTradingStore((s) => s.hydrateTrading)
   const tryFillPendingOrders = useEvaluationTradingStore((s) => s.tryFillPendingOrders)
-  const updatePositionLtp = useEvaluationTradingStore((s) => s.updatePositionLtp)
 
   const liveQuotes = usePortfolioStore((s) => s.liveQuotes)
 
@@ -46,7 +45,10 @@ export default function TradingRoomPage() {
   const [chartSymbol, setChartSymbol] = useState(() => getActiveChartSymbol())
   const [mobileSheet, setMobileSheet] = useState<null | { side?: 'buy' | 'sell' }>(null)
 
-  useMockTicker(1500)
+  useEffect(() => {
+    if (!accountId) return
+    void hydrateTrading(accountId)
+  }, [accountId, hydrateTrading])
 
   useEffect(() => {
     if (!accountId) return
@@ -77,15 +79,13 @@ export default function TradingRoomPage() {
       chartQuote?.price ??
       activeInstrument.lastPrice
 
-    tryFillPendingOrders(sym, price)
-    updatePositionLtp(sym, price)
+    void tryFillPendingOrders(accountId, sym, price)
   }, [
     liveQuotes,
     activeInstrument,
     chartSymbol,
     accountId,
     tryFillPendingOrders,
-    updatePositionLtp,
   ])
 
   useEffect(() => {

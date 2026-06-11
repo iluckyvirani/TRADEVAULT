@@ -28,6 +28,12 @@ export interface ProfileFormData {
   onboardingHelp: boolean
 }
 
+export interface AuthSessionInput {
+  user: AuthUser
+  registrationStep: RegistrationStep | null
+  onboardingComplete: boolean
+}
+
 interface AuthState {
   isAuthenticated: boolean
   user: AuthUser | null
@@ -35,6 +41,10 @@ interface AuthState {
   onboardingComplete: boolean
   failedAttempts: number
   lockedUntil: number | null
+  authReady: boolean
+  setSession: (session: AuthSessionInput) => void
+  clearSession: () => void
+  setAuthReady: (ready: boolean) => void
   register: (email: string) => void
   signIn: (email: string, name?: string) => void
   completeProfile: (data: ProfileFormData) => void
@@ -56,6 +66,29 @@ export const useAuthStore = create<AuthState>()(
       onboardingComplete: false,
       failedAttempts: 0,
       lockedUntil: null,
+      authReady: false,
+
+      setSession: (session) =>
+        set({
+          isAuthenticated: true,
+          user: session.user,
+          registrationStep: session.registrationStep,
+          onboardingComplete: session.onboardingComplete,
+          failedAttempts: 0,
+          lockedUntil: null,
+        }),
+
+      clearSession: () =>
+        set({
+          isAuthenticated: false,
+          user: null,
+          registrationStep: null,
+          onboardingComplete: false,
+          failedAttempts: 0,
+          lockedUntil: null,
+        }),
+
+      setAuthReady: (ready) => set({ authReady: ready }),
 
       register: (email) =>
         set({

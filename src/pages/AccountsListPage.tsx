@@ -143,9 +143,11 @@ export default function AccountsListPage() {
                 <p className={cn('mt-1 text-xs', subCls)}>
                   {formatCurrencyWhole(master.accountSize)} account
                 </p>
-                <span className="mt-1 inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
-                  {master.stepType}
-                </span>
+                {master.labels.includes('FREE TRIAL') && (
+                  <span className="mt-1 inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                    FREE TRIAL
+                  </span>
+                )}
               </div>
               <p className={cn('font-semibold', titleCls)}>{formatCurrency(master.equity)}</p>
               <p className={cn('font-semibold', master.todayPnL < 0 ? 'text-red-500' : 'text-green-500')}>

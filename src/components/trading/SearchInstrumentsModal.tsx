@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { Loader2, Search, SlidersHorizontal, X } from 'lucide-react'
+import { fetchInstruments, fetchOptionChain } from '@/lib/api/market'
 import {
   COMMODITY_TAGS,
   FILTER_CHIPS,
+  getApiInstruments,
   mockInstruments,
+  setApiInstruments,
   type Instrument,
   type InstrumentCategory,
   type InstrumentFilter,
@@ -47,6 +50,14 @@ const INDEX_FILTERS: InstrumentFilter[] = [
   'sensex',
 ]
 
+const FILTER_UNDERLYING: Partial<Record<InstrumentFilter, string>> = {
+  nifty: 'NIFTY',
+  banknifty: 'BANKNIFTY',
+  finnifty: 'FINNIFTY',
+  midcapnifty: 'MIDCPNIFTY',
+  sensex: 'SENSEX',
+}
+
 function matchesSearch(instrument: Instrument, query: string) {
   if (!query.trim()) return true
   const q = query.toLowerCase().trim()
@@ -67,13 +78,29 @@ function matchesCommodityTag(instrument: Instrument, tag: string | null) {
   return instrument.commodityTag === tag
 }
 
+function apiChainToConfig(
+  chain: Awaited<ReturnType<typeof fetchOptionChain>>,
+): OptionChainConfig {
+  return {
+    underlying: chain.underlying,
+    filter: chain.filter as InstrumentFilter,
+    atm: chain.atm,
+    expiries: chain.expiries,
+    strikes: chain.strikes,
+  }
+}
+
 export default function SearchInstrumentsModal({ open, onClose, onSelect }: Props) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<InstrumentFilter>('all')
   const [commodityTag, setCommodityTag] = useState<string | null>(null)
   const [selectedExpiry, setSelectedExpiry] = useState<string | null>(null)
-
-  const optionChain = getOptionChainForFilter(filter)
+  const [instruments, setInstruments] = useState<Instrument[]>(
+    () => getApiInstruments() ?? mockInstruments,
+  )
+  const [loading, setLoading] = useState(false)
+  const [optionChain, setOptionChain] = useState<OptionChainConfig | null>(null)
+  const [chainLoading, setChainLoading] = useState(false)
 
   useEffect(() => {
     if (!open) {
@@ -81,8 +108,68 @@ export default function SearchInstrumentsModal({ open, onClose, onSelect }: Prop
       setFilter('all')
       setCommodityTag(null)
       setSelectedExpiry(null)
+      return
+    }
+
+    const cached = getApiInstruments()
+    if (cached?.length) setInstruments(cached)
+
+    let cancelled = false
+    async function loadInstruments() {
+      setLoading(true)
+      try {
+        const list = await fetchInstruments()
+        if (cancelled) return
+        if (list.length > 0) {
+          setInstruments(list)
+          setApiInstruments(list)
+        }
+      } catch {
+        if (!cancelled) setInstruments(mockInstruments)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void loadInstruments()
+    return () => {
+      cancelled = true
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open) return
+
+    const mockChain = getOptionChainForFilter(filter)
+    if (!INDEX_FILTERS.includes(filter) || !mockChain) {
+      setOptionChain(null)
+      return
+    }
+
+    const underlying = FILTER_UNDERLYING[filter]
+    if (!underlying) {
+      setOptionChain(mockChain)
+      return
+    }
+
+    let cancelled = false
+    async function loadChain() {
+      setChainLoading(true)
+      try {
+        const chain = await fetchOptionChain(underlying!, filter)
+        if (!cancelled) setOptionChain(apiChainToConfig(chain))
+      } catch {
+        if (!cancelled) setOptionChain(mockChain ?? null)
+      } finally {
+        if (!cancelled) setChainLoading(false)
+      }
+    }
+
+    void loadChain()
+    return () => {
+      cancelled = true
+    }
+  }, [open, filter])
 
   useEffect(() => {
     if (optionChain) {
@@ -90,7 +177,7 @@ export default function SearchInstrumentsModal({ open, onClose, onSelect }: Prop
     } else {
       setSelectedExpiry(null)
     }
-  }, [filter, optionChain?.underlying])
+  }, [optionChain?.underlying, optionChain?.expiries])
 
   useEffect(() => {
     if (filter === 'commodity' && !commodityTag) {
@@ -110,13 +197,13 @@ export default function SearchInstrumentsModal({ open, onClose, onSelect }: Prop
 
   const filtered = useMemo(
     () =>
-      mockInstruments.filter(
+      instruments.filter(
         (i) =>
           matchesFilter(i, filter) &&
           matchesCommodityTag(i, commodityTag) &&
           matchesSearch(i, query),
       ),
-    [filter, commodityTag, query],
+    [instruments, filter, commodityTag, query],
   )
 
   const grouped = useMemo(() => {
@@ -175,6 +262,7 @@ export default function SearchInstrumentsModal({ open, onClose, onSelect }: Prop
                 autoFocus
                 className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
               />
+              {loading && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
             </div>
             <button
               type="button"
@@ -241,7 +329,9 @@ export default function SearchInstrumentsModal({ open, onClose, onSelect }: Prop
 
         <div className="flex-1 overflow-y-auto">
           {visibleGrouped.length === 0 && !showOptionChain ? (
-            <p className="py-16 text-center text-sm text-gray-500">No instruments match your search.</p>
+            <p className="py-16 text-center text-sm text-gray-500">
+              {loading ? 'Loading instruments…' : 'No instruments match your search.'}
+            </p>
           ) : (
             <>
               {visibleGrouped.map(({ category, label, items }) => (
@@ -260,6 +350,10 @@ export default function SearchInstrumentsModal({ open, onClose, onSelect }: Prop
                   </ul>
                 </section>
               ))}
+
+              {chainLoading && !showOptionChain && INDEX_FILTERS.includes(filter) && (
+                <p className="py-8 text-center text-sm text-gray-500">Loading option chain…</p>
+              )}
 
               {showOptionChain && optionChain && selectedExpiry && (
                 <OptionsChainSection

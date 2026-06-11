@@ -4,18 +4,41 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "echo \"API not implemented yet — see docs/BACKEND_DEVELOPMENT.md\"",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:validate": "prisma validate",
-    "db:push": "prisma db push"
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.3"
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "razorpay": "^2.9.6",
+    "ws": "^8.21.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.3.0",
+    "@types/ws": "^8.18.1",
     "prisma": "^6.19.3",
+    "tsx": "^4.20.5",
     "typescript": "~6.0.2"
   }
 }

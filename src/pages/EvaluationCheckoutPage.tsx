@@ -1,40 +1,34 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MessageCircle, Monitor, Shield } from 'lucide-react'
+import { ApiError } from '@/lib/api/client'
+import * as checkoutApi from '@/lib/api/checkout'
+import { getMe } from '@/lib/api/auth'
+import { openRazorpayCheckout } from '@/lib/razorpay'
 import { useAuthStore } from '@/store/authStore'
 import { useEvaluationAccountStore } from '@/store/evaluationAccountStore'
 import { useCheckoutStore } from '@/store/checkoutStore'
-import {
-  mockEvaluationPlanTiers,
-  mockTradingPrograms,
-} from '@/lib/mock/mockAssessmentPlans'
 import EvaluationPlanCard from '@/components/checkout/EvaluationPlanCard'
 import OrderSummarySidebar from '@/components/checkout/OrderSummarySidebar'
-import { getPlanById } from '@/lib/mock/mockAssessmentPlans'
-import { useAffiliateStore } from '@/store/affiliateStore'
-import { useBillingStore } from '@/store/billingStore'
+import { usePlans } from '@/hooks/usePlans'
 import { useThemeStore } from '@/store/themeStore'
-import { cn, formatCurrencyWhole } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 export default function EvaluationCheckoutPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const markEvaluationStarted = useAuthStore((s) => s.markEvaluationStarted)
-  const createPaid = useEvaluationAccountStore((s) => s.createPaid)
+  const setSession = useAuthStore((s) => s.setSession)
+  const hydrateAccounts = useEvaluationAccountStore((s) => s.hydrateAccounts)
   const isDark = useThemeStore((s) => s.mode === 'dark')
+  const [payError, setPayError] = useState('')
 
-  const selectedProgram = useCheckoutStore((s) => s.selectedProgram)
   const selectedPlanId = useCheckoutStore((s) => s.selectedPlanId)
-  const showObjectives = useCheckoutStore((s) => s.showObjectives)
-  const setProgram = useCheckoutStore((s) => s.setProgram)
   const setPlanId = useCheckoutStore((s) => s.setPlanId)
-  const setShowObjectives = useCheckoutStore((s) => s.setShowObjectives)
   const setPaying = useCheckoutStore((s) => s.setPaying)
   const setAffiliateCode = useCheckoutStore((s) => s.setAffiliateCode)
   const affiliateCode = useCheckoutStore((s) => s.affiliateCode)
   const termsAccepted = useCheckoutStore((s) => s.termsAccepted)
-  const recordReferral = useAffiliateStore((s) => s.recordReferralFromCheckout)
-  const addPayment = useBillingStore((s) => s.addPayment)
+  const { tiers } = usePlans()
   const [searchParams] = useSearchParams()
 
   useEffect(() => {
@@ -42,43 +36,80 @@ export default function EvaluationCheckoutPage() {
     if (ref) setAffiliateCode(ref.toUpperCase())
   }, [searchParams, setAffiliateCode])
 
+  async function completeCheckout() {
+    await hydrateAccounts()
+    const me = await getMe()
+    setSession({
+      user: me.user,
+      registrationStep: me.registrationStep,
+      onboardingComplete: me.onboardingComplete,
+    })
+    navigate('/dashboard')
+  }
+
   async function handlePay() {
     if (!user || !termsAccepted) return
-    const plan = getPlanById(selectedPlanId)
+    const plan = tiers.find((p) => p.id === selectedPlanId)
     if (!plan) return
 
     setPaying(true)
-    await new Promise((r) => setTimeout(r, 1500))
+    setPayError('')
 
-    createPaid(user.id, {
-      stepType: selectedProgram,
-      accountSize: plan.balance,
-    })
-
-    addPayment({
-      userId: user.id,
-      program: `${selectedProgram} · ${formatCurrencyWhole(plan.balance)}`,
-      accountSize: plan.balance,
-      amount: plan.evaluationFee,
-      currency: 'INR',
-      status: 'paid',
-      paymentMethod: 'UPI · Mock',
-    })
-
-    if (affiliateCode.trim()) {
-      recordReferral({
-        affiliateCode,
-        buyerUserId: user.id,
-        buyerName: user.name,
-        buyerEmail: user.email,
-        orderAmount: plan.evaluationFee,
-        program: `${selectedProgram} · ${formatCurrencyWhole(plan.balance)}`,
+    try {
+      const order = await checkoutApi.createCheckoutOrder({
+        planId: plan.id,
+        affiliateCode: affiliateCode.trim() || undefined,
       })
-    }
 
-    markEvaluationStarted()
-    setPaying(false)
-    navigate('/dashboard')
+      if (order.mock) {
+        await checkoutApi.mockCompleteCheckout(order.billingRecordId)
+        await completeCheckout()
+        return
+      }
+
+      if (!order.keyId || !order.razorpayOrderId) {
+        throw new Error('Payment gateway is not configured')
+      }
+
+      const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID || order.keyId
+
+      await new Promise<void>((resolve, reject) => {
+        void openRazorpayCheckout({
+          keyId,
+          orderId: order.razorpayOrderId!,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'tradeox',
+          description: order.program,
+          email: user.email,
+          contact: user.phone ?? undefined,
+          onSuccess: async (response) => {
+            try {
+              await checkoutApi.verifyCheckoutPayment({
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              })
+              await completeCheckout()
+              resolve()
+            } catch (err) {
+              reject(err)
+            }
+          },
+          onDismiss: () => {
+            reject(new Error('Payment cancelled'))
+          },
+        })
+      })
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Payment cancelled') {
+        setPayError('Payment was cancelled')
+      } else {
+        setPayError(err instanceof ApiError ? err.message : 'Payment failed')
+      }
+    } finally {
+      setPaying(false)
+    }
   }
 
   const titleCls = isDark ? 'text-white' : 'text-gray-900'
@@ -92,62 +123,33 @@ export default function EvaluationCheckoutPage() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
         <div>
           <section>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h1 className={cn('text-2xl font-bold', titleCls)}>Evaluation Plans</h1>
-                <p className={cn('mt-2 max-w-2xl text-sm leading-relaxed', subCls)}>
-                  Choose your account size and program. Complete objectives and unlock your
-                  rewards split.
-                </p>
-              </div>
-              <label className="flex cursor-pointer items-center gap-2">
-                <span className={cn('text-sm', subCls)}>Objectives</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={showObjectives}
-                  onClick={() => setShowObjectives(!showObjectives)}
-                  className={cn(
-                    'relative h-6 w-11 rounded-full transition-colors',
-                    showObjectives ? 'bg-[#002D5B]' : 'bg-gray-300',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform',
-                      showObjectives ? 'left-[22px]' : 'left-0.5',
-                    )}
-                  />
-                </button>
-              </label>
+            <div>
+              <h1 className={cn('text-2xl font-bold', titleCls)}>Evaluation Plans</h1>
+              <p className={cn('mt-2 max-w-2xl text-sm leading-relaxed', subCls)}>
+                Choose your account size. Each plan includes the evaluation objectives below —
+                complete them to unlock your reward.
+              </p>
             </div>
 
+            {payError && (
+              <p className="mt-4 text-sm text-red-600">{payError}</p>
+            )}
+
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {mockEvaluationPlanTiers.flatMap((plan) =>
-                mockTradingPrograms.map((program) => {
-                  const selected =
-                    selectedPlanId === plan.id && selectedProgram === program.id
-                  return (
-                    <EvaluationPlanCard
-                      key={`${plan.id}-${program.id}`}
-                      plan={plan}
-                      program={program}
-                      selected={selected}
-                      showObjectives={showObjectives}
-                      onSelect={() => {
-                        setPlanId(plan.id)
-                        setProgram(program.id)
-                      }}
-                    />
-                  )
-                }),
-              )}
+              {tiers.map((plan) => (
+                <EvaluationPlanCard
+                  key={plan.id}
+                  plan={plan}
+                  selected={selectedPlanId === plan.id}
+                  onSelect={() => setPlanId(plan.id)}
+                />
+              ))}
             </div>
 
             <div className="mt-6 space-y-2">
               {[
                 { icon: Monitor, label: 'Platform', value: 'TradingView Web Terminal' },
-                { icon: Shield, label: 'Risk Rules', value: 'Clear daily loss & max loss rules.' },
+                { icon: Shield, label: 'Risk Rules', value: 'Clear daily loss & max loss limits.' },
               ].map(({ icon: Icon, label, value }) => (
                 <div
                   key={label}

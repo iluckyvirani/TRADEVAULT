@@ -1,9 +1,6 @@
-import { Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import {
-  mockEvaluationPlanTiers,
-  mockTradingPrograms,
-} from '@/lib/mock/mockAssessmentPlans'
+import { mockEvaluationPlanTiers } from '@/lib/mock/mockAssessmentPlans'
+import { objectivesToRows } from '@/lib/plans/objectives'
 import { formatCurrencyWhole } from '@/lib/utils'
 
 export default function PricingSection() {
@@ -18,39 +15,9 @@ export default function PricingSection() {
             Choose your account size
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            One-time evaluation access fee in INR — not a deposit. Pick 1-Step or 2-Step rules,
-            or practice first with a free trial account.
+            One-time evaluation access fee in INR — not a deposit. Every plan includes the same
+            evaluation objectives, or practice first with a free trial.
           </p>
-        </div>
-
-        <div className="mb-10 grid gap-4 md:grid-cols-2">
-          {mockTradingPrograms.map((program) => (
-            <div
-              key={program.id}
-              className="rounded-2xl border border-border bg-card p-6"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">{program.title}</h3>
-                  <p className="text-sm text-muted-foreground">{program.subtitle}</p>
-                </div>
-                <span className="rounded-full bg-[#002D5B]/10 px-3 py-1 text-xs font-medium text-[#002D5B] dark:text-blue-300">
-                  {program.stages.join(' → ')}
-                </span>
-              </div>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {program.rules.map((rule) => (
-                  <li
-                    key={rule.label}
-                    className="flex items-center justify-between rounded-lg border border-border/60 bg-background/50 px-3 py-2 text-sm"
-                  >
-                    <span className="text-muted-foreground">{rule.label}</span>
-                    <span className="font-medium text-foreground">{rule.value}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -83,20 +50,19 @@ export default function PricingSection() {
               <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
                 Save {formatCurrencyWhole(plan.savings)}
               </p>
-              <ul className="mt-4 flex-1 space-y-2 text-xs text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                  Full platform access
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                  Trading room & stats
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                  Simulated INR environment
-                </li>
+
+              <ul className="mt-4 flex-1 space-y-1.5 border-t border-border pt-4">
+                {objectivesToRows(plan.objectives).map((row) => (
+                  <li
+                    key={row.label}
+                    className="flex justify-between gap-2 text-[11px]"
+                  >
+                    <span className="text-muted-foreground">{row.label}</span>
+                    <span className="font-medium text-foreground">{row.value}</span>
+                  </li>
+                ))}
               </ul>
+
               <Link
                 to="/evaluation"
                 className={`mt-6 block rounded-xl py-2.5 text-center text-sm font-semibold transition-colors ${

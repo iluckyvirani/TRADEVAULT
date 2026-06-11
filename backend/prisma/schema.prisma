@@ -1,5 +1,5 @@
 // tradeox — Neon PostgreSQL schema
-// Docs: backend/docs/BACKEND_DEVELOPMENT.md
+// Synced with ../src/ stores & mock types (June 2026)
 // Run from backend/: npm run db:migrate
 
 generator client {
@@ -33,6 +33,31 @@ enum CommChannel {
   call
 }
 
+enum ThemeMode {
+  light
+  dark
+}
+
+enum TradingStyle {
+  day
+  swing
+  longterm
+  passive
+}
+
+enum ExperienceLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+enum DefaultOrderType {
+  market
+  limit
+  stop
+  stop_limit
+}
+
 enum AccountPlan {
   free_trial
   paid
@@ -59,13 +84,56 @@ enum OrderType {
   market
   limit
   stop
+  stop_limit
 }
 
 enum OrderStatus {
+  pending
   open
   filled
+  partially_filled
   cancelled
   rejected
+}
+
+enum OrderTimeInForce {
+  day
+  gtc
+  ioc
+  fok
+}
+
+enum BasketSizeMode {
+  contracts
+  lots
+}
+
+enum Exchange {
+  NSE
+  BSE
+  MCX
+}
+
+enum InstrumentCategory {
+  index
+  future
+  equity
+  commodity
+  option
+}
+
+enum InstrumentBadge {
+  INDEX
+  FUT
+  EQ
+  MCX
+  CE
+  PE
+}
+
+enum OptionSide {
+  CE
+  PE
 }
 
 enum ReferralStatus {
@@ -100,32 +168,23 @@ enum FeedbackStatus {
   resolved
 }
 
-enum BasketSizeMode {
-  contracts
-  lots
-}
-
-enum ThemeMode {
-  light
-  dark
-}
-
 // ─── Auth & users ────────────────────────────────────────────────────────────
 
 model User {
-  id                 String            @id @default(cuid())
-  email              String            @unique
-  passwordHash       String?
-  name               String
-  title              ProfileTitle?
-  phone              String?
-  avatar             String            @default("av1")
-  currency           String            @default("INR")
-  registrationStep   RegistrationStep?
-  onboardingComplete Boolean           @default(false)
-  emailVerifiedAt    DateTime?
-  failedAttempts     Int               @default(0)
-  lockedUntil        DateTime?
+  id                   String            @id @default(cuid())
+  email                String            @unique
+  passwordHash         String?
+  name                 String
+  title                ProfileTitle?
+  phone                String?
+  avatar               String            @default("av1")
+  currency             String            @default("INR")
+  startingBalance      Decimal?          @db.Decimal(14, 2)
+  registrationStep     RegistrationStep?
+  onboardingComplete   Boolean           @default(false)
+  emailVerifiedAt      DateTime?
+  failedAttempts       Int               @default(0)
+  lockedUntil          DateTime?
   pendingAffiliateCode String?
 
   createdAt DateTime @default(now())
@@ -139,6 +198,7 @@ model User {
   billingRecords     BillingRecord[]
   feedback           FeedbackSubmission[]
   watchlists         Watchlist[]
+  killSwitchEvents   KillSwitchEvent[]
 
   referralsMade    Referral[]        @relation("ReferrerUser")
   referralsAsBuyer Referral[]        @relation("BuyerUser")
@@ -148,15 +208,40 @@ model User {
 }
 
 model UserPreferences {
-  id               String      @id @default(cuid())
-  userId           String      @unique
-  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nickname         String?
-  theme            ThemeMode   @default(light)
-  onboardingHelp   Boolean     @default(false)
-  commChannel      CommChannel @default(whatsapp)
-  killSwitchActive Boolean     @default(false)
-  updatedAt        DateTime    @updatedAt
+  id        String @id @default(cuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ProfilePage — Personal / Preferences tabs
+  nickname       String?
+  theme          ThemeMode   @default(light)
+  onboardingHelp Boolean     @default(false)
+  commChannel    CommChannel @default(whatsapp)
+
+  // mockUser.preferences + trading room defaults
+  defaultOrderType  DefaultOrderType @default(market)
+  confirmOrders     Boolean          @default(true)
+  notifyOrderFilled Boolean          @default(true)
+  notifyPriceAlerts Boolean          @default(true)
+  notifyNews        Boolean          @default(false)
+
+  // OnboardingPage (step 2–3) — persisted when API replaces mock flow
+  tradingStyle       TradingStyle?
+  experienceLevel    ExperienceLevel?
+  onboardingSymbols  String[]         @default([])
+
+  // evaluationAccountStore.activeAccountId
+  activeAccountId String?
+
+  // instrumentStore — per-user trading room UI state
+  activeInstrumentId String  @default("eq-hdfcbank")
+  activeWatchlistId  String?
+
+  // ProfilePage — Daily Kill Switch
+  killSwitchActive    Boolean   @default(false)
+  killSwitchActivatedAt DateTime?
+
+  updatedAt DateTime @updatedAt
 }
 
 model RefreshToken {
@@ -179,13 +264,25 @@ model EmailVerificationToken {
   createdAt DateTime @default(now())
 }
 
+model KillSwitchEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradingDate DateTime @db.Date
+  activatedAt DateTime @default(now())
+
+  @@unique([userId, tradingDate])
+}
+
 // ─── Affiliate / Refer & Earn ────────────────────────────────────────────────
+// Commission: flat ₹500 per referral (REFERRAL_REWARD_AMOUNT in mockAffiliate.ts)
 
 model AffiliateProfile {
   id        String   @id @default(cuid())
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   code      String   @unique
+  seeded    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([code])
@@ -222,7 +319,43 @@ model AffiliatePayout {
   @@index([affiliateUserId])
 }
 
+// ─── Evaluation programs & plans ─────────────────────────────────────────────
+// mockAssessmentPlans.ts — mockTradingPrograms, mockEvaluationPlanTiers
+
+model TradingProgram {
+  id                           String   @id
+  title                        String
+  subtitle                     String
+  stages                       String[]
+  profitTarget                 String
+  maximumLossLimit             String
+  maximumDailyLossLimit        String
+  requiredTradingDays          String
+  minimumProfitableTradingDays String
+  reward                       String
+  active                       Boolean  @default(true)
+}
+
+model EvaluationPlanTier {
+  id                           String  @id
+  balance                      Decimal @db.Decimal(14, 2)
+  evaluationFee                Decimal @db.Decimal(12, 2)
+  originalFee                  Decimal @db.Decimal(12, 2)
+  savings                      Decimal @db.Decimal(12, 2)
+  popular                      Boolean @default(false)
+  active                       Boolean @default(true)
+  profitTarget                 String  @default("10%")
+  maximumLossLimit             String  @default("10%")
+  maximumDailyLossLimit        String  @default("5%")
+  requiredTradingDays          String  @default("4 days")
+  minimumProfitableTradingDays String  @default("2 days")
+  reward                       String  @default("Up to 90% profit split")
+
+  billingRecords BillingRecord[]
+}
+
 // ─── Evaluation accounts ─────────────────────────────────────────────────────
+// mockEvaluationAccounts.ts — EvaluationAccount
 
 model EvaluationAccount {
   id                   String             @id
@@ -241,9 +374,12 @@ model EvaluationAccount {
   maxLoss              Decimal            @db.Decimal(14, 2)
   dailyMaxLoss         Decimal            @db.Decimal(14, 2)
   profitTarget         Decimal            @db.Decimal(14, 2)
-  minTradingDays       Int                @default(4)
-  tradingDaysCompleted Int                @default(0)
-  rolloverProfit       Decimal            @db.Decimal(14, 2) @default(0)
+  minTradingDays                 Int                @default(4)
+  tradingDaysCompleted           Int                @default(0)
+  minProfitableTradingDays       Int                @default(2)
+  profitableTradingDaysCompleted Int                @default(0)
+  reward                         String?
+  rolloverProfit                 Decimal            @db.Decimal(14, 2) @default(0)
   labels               String[]           @default([])
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
@@ -270,6 +406,8 @@ model EquityCurvePoint {
   @@index([accountId, ts])
 }
 
+// evaluationTradingStore.ts — EvaluationOrder
+
 model EvaluationOrder {
   id              String            @id
   accountId       String
@@ -281,12 +419,15 @@ model EvaluationOrder {
   side            OrderSide
   type            OrderType
   status          OrderStatus
+  timeInForce     OrderTimeInForce  @default(day)
   lots            Int
+  filledLots      Int               @default(0)
   limitPrice      Decimal?          @db.Decimal(12, 4)
   stopPrice       Decimal?          @db.Decimal(12, 4)
   triggerPrice    Decimal?          @db.Decimal(12, 4)
   takeProfitPrice Decimal?          @db.Decimal(12, 4)
   stopLossPrice   Decimal?          @db.Decimal(12, 4)
+  stopTriggered   Boolean           @default(false)
   filledPrice     Decimal?          @db.Decimal(12, 4)
   totalValue      Decimal           @db.Decimal(14, 2)
   createdAt       DateTime          @default(now())
@@ -296,6 +437,8 @@ model EvaluationOrder {
   @@index([accountId, status, createdAt])
   @@index([symbol, status])
 }
+
+// evaluationTradingStore.ts — EvaluationPosition
 
 model EvaluationPosition {
   id            String            @id @default(cuid())
@@ -314,6 +457,8 @@ model EvaluationPosition {
   @@unique([accountId, instrumentId])
   @@index([accountId])
 }
+
+// evaluationTradingStore.ts — TradingBasket + AccountTradingConfig
 
 model TradingBasket {
   id            String            @id @default(cuid())
@@ -335,28 +480,83 @@ model AccountTradingConfig {
   basketSizeMode BasketSizeMode    @default(lots)
 }
 
+// ─── Instruments & market data ─────────────────────────────────────────────
+// mockInstruments.ts — Instrument
+
 model Instrument {
-  id          String    @id
+  id          String             @id
   symbol      String
-  exchange    String
-  segment     String?
   displayName String
-  lotSize     Int       @default(1)
-  tickSize    Decimal?  @db.Decimal(12, 4)
-  expiry      DateTime?
-  strike      Decimal?  @db.Decimal(12, 4)
-  optionType  String?
-  viewOnly    Boolean   @default(false)
+  category    InstrumentCategory
+  filterTags  String[]           @default([])
+  badge       InstrumentBadge
+  exchange    Exchange
+  expiry      String?
+  lotSize     Int                @default(1)
+  tickSize    Decimal?           @db.Decimal(12, 4)
+  lastPrice   Decimal            @db.Decimal(12, 4) @default(0)
+  bid         Decimal            @db.Decimal(12, 4) @default(0)
+  ask         Decimal            @db.Decimal(12, 4) @default(0)
+  strike      Decimal?           @db.Decimal(12, 4)
+  optionSide  OptionSide?
+  underlying  String?
+  commodityTag String?
+  viewOnly    Boolean            @default(false)
   chartSymbol String
-  isTradable  Boolean   @default(true)
-  updatedAt   DateTime  @updatedAt
+  isTradable  Boolean            @default(true)
+  updatedAt   DateTime           @updatedAt
 
   orders    EvaluationOrder[]
   positions EvaluationPosition[]
 
   @@unique([symbol, exchange])
   @@index([symbol])
+  @@index([category])
 }
+
+// mockQuotes.ts — portfolioStore.liveQuotes / useMockTicker
+
+model MarketQuote {
+  symbol         String   @id
+  name           String
+  price          Decimal  @db.Decimal(12, 4)
+  open           Decimal  @db.Decimal(12, 4)
+  high           Decimal  @db.Decimal(12, 4)
+  low            Decimal  @db.Decimal(12, 4)
+  close          Decimal  @db.Decimal(12, 4)
+  previousClose  Decimal  @db.Decimal(12, 4)
+  change         Decimal  @db.Decimal(12, 4)
+  changePct      Decimal  @db.Decimal(8, 4)
+  volume         BigInt
+  avgVolume      BigInt
+  marketCap      String?
+  peRatio        Decimal? @db.Decimal(10, 2)
+  week52High     Decimal  @db.Decimal(12, 4)
+  week52Low      Decimal  @db.Decimal(12, 4)
+  dividendYield  Decimal? @db.Decimal(8, 4)
+  beta           Decimal? @db.Decimal(8, 4)
+  lastUpdated    DateTime @default(now())
+}
+
+// mockCandles.ts — ChartPanel OHLCV
+
+model MarketCandle {
+  id       String   @id @default(cuid())
+  symbol   String
+  interval String
+  time     DateTime
+  open     Decimal  @db.Decimal(12, 4)
+  high     Decimal  @db.Decimal(12, 4)
+  low      Decimal  @db.Decimal(12, 4)
+  close    Decimal  @db.Decimal(12, 4)
+  volume   BigInt   @default(0)
+
+  @@unique([symbol, interval, time])
+  @@index([symbol, interval, time])
+}
+
+// ─── Watchlists ──────────────────────────────────────────────────────────────
+// instrumentStore.ts — watchlists: Record<string, string[]>
 
 model Watchlist {
   id        String          @id @default(cuid())
@@ -380,12 +580,17 @@ model WatchlistItem {
   @@unique([watchlistId, instrumentId])
 }
 
+// ─── Billing & payments ──────────────────────────────────────────────────────
+// billingStore.ts — BillingRecord (frontend field `date` → paidAt)
+
 model BillingRecord {
   id                String             @id @default(cuid())
   userId            String
   user              User               @relation(fields: [userId], references: [id])
   accountId         String?
   account           EvaluationAccount? @relation(fields: [accountId], references: [id])
+  planId            String?
+  plan              EvaluationPlanTier? @relation(fields: [planId], references: [id])
   program           String
   accountSize       Decimal            @db.Decimal(14, 2)
   amount            Decimal            @db.Decimal(12, 2)
@@ -401,6 +606,9 @@ model BillingRecord {
   @@index([userId, paidAt])
 }
 
+// ─── Support & content ───────────────────────────────────────────────────────
+// mockContact.ts, mockFaq.ts
+
 model FeedbackSubmission {
   id        String           @id @default(cuid())
   userId    String?
@@ -411,21 +619,21 @@ model FeedbackSubmission {
   createdAt DateTime         @default(now())
 }
 
-model FaqItem {
-  id        String  @id @default(cuid())
-  category  String
-  question  String
-  answer    String  @db.Text
-  sortOrder Int     @default(0)
-  published Boolean @default(true)
+model FaqCategory {
+  id        String    @id @default(cuid())
+  title     String
+  sortOrder Int       @default(0)
+  published Boolean   @default(true)
+  items     FaqItem[]
 }
 
-model EvaluationPlanTier {
-  id            String  @id
-  balance       Decimal @db.Decimal(14, 2)
-  evaluationFee Decimal @db.Decimal(12, 2)
-  originalFee   Decimal @db.Decimal(12, 2)
-  savings       Decimal @db.Decimal(12, 2)
-  popular       Boolean @default(false)
-  active        Boolean @default(true)
+model FaqItem {
+  id         String       @id @default(cuid())
+  categoryId String?
+  category   FaqCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categorySlug String?
+  question   String
+  answer     String       @db.Text
+  sortOrder  Int          @default(0)
+  published  Boolean      @default(true)
 }

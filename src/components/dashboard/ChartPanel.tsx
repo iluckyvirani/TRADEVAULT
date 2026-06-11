@@ -7,6 +7,8 @@ import {
 } from 'lightweight-charts'
 import type { IChartApi, UTCTimestamp } from 'lightweight-charts'
 import { mockCandles, mockQuotes } from '@/lib/mock'
+import { fetchCandles } from '@/lib/api/market'
+import type { Candle } from '@/lib/mock/mockCandles'
 import { usePortfolioStore } from '@/store/portfolioStore'
 import { useThemeStore } from '@/store/themeStore'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -77,9 +79,40 @@ export function ChartPanel({
   const [showMA20, setShowMA20] = useState(true)
   const [showMA50, setShowMA50] = useState(true)
   const [showChart, setShowChart] = useState(true)
+  const [candles, setCandles] = useState<Candle[]>([])
+  const [candleInterval, setCandleInterval] = useState('1d')
 
   const liveQuotes = usePortfolioStore((s) => s.liveQuotes)
   const quote = liveQuotes[symbol]
+
+  const isIntraday = terminal && timeframe === '1M'
+
+  useEffect(() => {
+    let cancelled = false
+    const interval = isIntraday ? '1m' : '1d'
+    const limit = isIntraday ? 390 : TF_DAYS[timeframe]
+
+    void fetchCandles(symbol, { interval, limit })
+      .then((res) => {
+        if (cancelled) return
+        const data =
+          res.candles.length > 0
+            ? res.candles
+            : (mockCandles[symbol] ?? []).slice(-limit)
+        setCandles(data)
+        setCandleInterval(interval)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCandles((mockCandles[symbol] ?? []).slice(-limit))
+          setCandleInterval(interval)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [symbol, timeframe, isIntraday])
 
   // Sync controlled prop
   useEffect(() => {
@@ -132,9 +165,7 @@ export function ChartPanel({
 
     chartRef.current = chart
 
-    const all = mockCandles[symbol] ?? []
-    const days = TF_DAYS[timeframe]
-    const candles = all.slice(-Math.min(days, all.length))
+    if (candles.length === 0) return
 
     // Main series
     if (chartType === 'candlestick') {
@@ -236,7 +267,7 @@ export function ChartPanel({
       chart.remove()
       chartRef.current = null
     }
-  }, [symbol, timeframe, chartType, showMA20, showMA50, showChart])
+  }, [candles, chartType, showMA20, showMA50, showChart])
 
   function handleSymbolChange(sym: string) {
     setSymbol(sym)
@@ -495,7 +526,9 @@ export function ChartPanel({
         )}
       >
         <BarChart2 className="h-3 w-3 text-primary" />
-        <span>Mock Data · Daily OHLCV</span>
+        <span>
+          {candles.length > 0 ? 'API data' : 'Loading'} · {candleInterval === '1m' ? '1m' : 'Daily'} OHLCV
+        </span>
         {showMA20 && <span className="text-yellow-400">● MA 20</span>}
         {showMA50 && <span className="text-purple-400">● MA 50</span>}
         {terminal && (

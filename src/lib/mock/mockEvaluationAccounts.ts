@@ -1,5 +1,15 @@
+import type { ProgramObjectives } from '@/lib/plans/objectives'
+import {
+  DEFAULT_EVALUATION_OBJECTIVES,
+  parseDays,
+  parsePercentOf,
+} from '@/lib/plans/objectives'
+import { getPlanById } from './mockAssessmentPlans'
+
 export type AccountPlan = 'free_trial' | 'paid'
 export type AccountStatus = 'active' | 'failed' | 'passed' | 'paused'
+
+/** @deprecated Internal DB compat — not shown in UI */
 export type EvaluationStep = '1-Step' | '2-Step'
 
 export interface EvaluationAccount {
@@ -20,6 +30,9 @@ export interface EvaluationAccount {
   profitTarget: number
   minTradingDays: number
   tradingDaysCompleted: number
+  minProfitableTradingDays: number
+  profitableTradingDaysCompleted: number
+  reward?: string
   rolloverProfit: number
   createdAt: string
   labels: string[]
@@ -36,26 +49,36 @@ export function generateAccountId(prefix = 'FTL') {
   return `${prefix}-${randomSegment(4)}-${randomSegment(4)}-${randomSegment(4)}-${randomSegment(4)}-${randomSegment(1)}`
 }
 
+function limitsFromObjectives(size: number, objectives: ProgramObjectives) {
+  return {
+    maxLoss: parsePercentOf(objectives.maximumLossLimit, size),
+    dailyMaxLoss: parsePercentOf(objectives.maximumDailyLossLimit, size),
+    profitTarget: parsePercentOf(objectives.profitTarget, size),
+    minTradingDays: parseDays(objectives.requiredTradingDays),
+    minProfitableTradingDays: parseDays(objectives.minimumProfitableTradingDays),
+    reward: objectives.reward,
+  }
+}
+
 export interface FreeTrialOptions {
-  stepType?: EvaluationStep
   accountSize?: number
+  objectives?: ProgramObjectives
 }
 
 export function createFreeTrialAccount(
   userId: string,
   options: FreeTrialOptions = {},
 ): EvaluationAccount {
-  const stepType = options.stepType ?? '2-Step'
   const size = options.accountSize ?? 1_000_000
-  const maxLoss = Math.round(size * 0.1)
-  const dailyMaxLoss = Math.round(size * (stepType === '1-Step' ? 0.03 : 0.05))
-  const profitTarget = Math.round(size * 0.05)
+  const objectives = options.objectives ?? DEFAULT_EVALUATION_OBJECTIVES
+  const limits = limitsFromObjectives(size, objectives)
+
   return {
     id: generateAccountId('FTL'),
     userId,
     plan: 'free_trial',
     status: 'active',
-    stepType,
+    stepType: '2-Step',
     accountSize: size,
     balance: size,
     equity: size,
@@ -63,36 +86,37 @@ export function createFreeTrialAccount(
     todayPnL: 0,
     freeMargin: size,
     marginUsed: 0,
-    maxLoss,
-    dailyMaxLoss,
-    profitTarget,
-    minTradingDays: 2,
+    ...limits,
     tradingDaysCompleted: 0,
+    profitableTradingDaysCompleted: 0,
     rolloverProfit: 0,
     createdAt: new Date().toISOString(),
-    labels: ['ACTIVE', 'FREE TRIAL', stepType],
+    labels: ['ACTIVE', 'FREE TRIAL'],
   }
 }
 
 export interface PaidAccountOptions {
-  stepType: EvaluationStep
   accountSize: number
+  planId?: string
+  objectives?: ProgramObjectives
 }
 
 export function createPaidAccount(
   userId: string,
   options: PaidAccountOptions,
 ): EvaluationAccount {
-  const { stepType, accountSize: size } = options
-  const maxLoss = Math.round(size * 0.1)
-  const dailyMaxLoss = Math.round(size * (stepType === '1-Step' ? 0.03 : 0.05))
-  const profitTarget = Math.round(size * 0.05)
+  const { accountSize: size, planId } = options
+  const plan = planId ? getPlanById(planId) : undefined
+  const objectives =
+    options.objectives ?? plan?.objectives ?? DEFAULT_EVALUATION_OBJECTIVES
+  const limits = limitsFromObjectives(size, objectives)
+
   return {
     id: generateAccountId('EVL'),
     userId,
     plan: 'paid',
     status: 'active',
-    stepType,
+    stepType: '2-Step',
     accountSize: size,
     balance: size,
     equity: size,
@@ -100,13 +124,11 @@ export function createPaidAccount(
     todayPnL: 0,
     freeMargin: size,
     marginUsed: 0,
-    maxLoss,
-    dailyMaxLoss,
-    profitTarget,
-    minTradingDays: stepType === '1-Step' ? 2 : 4,
+    ...limits,
     tradingDaysCompleted: 0,
+    profitableTradingDaysCompleted: 0,
     rolloverProfit: 0,
     createdAt: new Date().toISOString(),
-    labels: ['ACTIVE', stepType],
+    labels: ['ACTIVE'],
   }
 }

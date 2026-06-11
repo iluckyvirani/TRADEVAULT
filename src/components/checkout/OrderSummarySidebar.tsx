@@ -1,6 +1,7 @@
 import { Loader2, Shield, Tag, Zap } from 'lucide-react'
 import { useCheckoutStore } from '@/store/checkoutStore'
-import { getPlanById, mockEvaluationPlanTiers } from '@/lib/mock/mockAssessmentPlans'
+import { mockEvaluationPlanTiers } from '@/lib/mock/mockAssessmentPlans'
+import { usePlans } from '@/hooks/usePlans'
 import { cn, formatCurrencyWhole } from '@/lib/utils'
 
 interface Props {
@@ -8,12 +9,12 @@ interface Props {
 }
 
 export default function OrderSummarySidebar({ onPay }: Props) {
-  const selectedProgram = useCheckoutStore((s) => s.selectedProgram)
   const selectedPlanId = useCheckoutStore((s) => s.selectedPlanId)
   const termsAccepted = useCheckoutStore((s) => s.termsAccepted)
   const setTermsAccepted = useCheckoutStore((s) => s.setTermsAccepted)
   const paying = useCheckoutStore((s) => s.paying)
-  const plan = getPlanById(selectedPlanId) ?? mockEvaluationPlanTiers[2]
+  const { tiers } = usePlans()
+  const plan = tiers.find((p) => p.id === selectedPlanId) ?? tiers[2] ?? mockEvaluationPlanTiers[2]
 
   return (
     <aside className="lg:sticky lg:top-6 lg:self-start">
@@ -54,7 +55,6 @@ export default function OrderSummarySidebar({ onPay }: Props) {
 
         <dl className="mt-4 space-y-3 text-sm">
           {[
-            ['Program', selectedProgram],
             ['Account size', formatCurrencyWhole(plan.balance)],
             ['Currency', 'INR'],
             ['Platform', 'TradingView Web'],

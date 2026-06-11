@@ -1,17 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, HelpCircle, Search } from 'lucide-react'
-import { FAQ_CATEGORIES } from '@/lib/mock/mockFaq'
+import { useFaq } from '@/hooks/useFaq'
 import { cn } from '@/lib/utils'
 
 export default function FaqPage() {
+  const { categories } = useFaq()
   const [query, setQuery] = useState('')
-  const [openId, setOpenId] = useState<string | null>(FAQ_CATEGORIES[0]?.items[0]?.id ?? null)
+  const [openId, setOpenId] = useState<string | null>(null)
   const [activeCategory, setActiveCategory] = useState<string>('all')
+
+  useEffect(() => {
+    if (!openId && categories[0]?.items[0]?.id) {
+      setOpenId(categories[0].items[0].id)
+    }
+  }, [categories, openId])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return FAQ_CATEGORIES.map((cat) => ({
+    return categories.map((cat) => ({
       ...cat,
       items: cat.items.filter((item) => {
         const matchesCategory = activeCategory === 'all' || cat.id === activeCategory
@@ -23,7 +30,7 @@ export default function FaqPage() {
         )
       }),
     })).filter((cat) => cat.items.length > 0)
-  }, [query, activeCategory])
+  }, [query, activeCategory, categories])
 
   const totalMatches = filtered.reduce((n, cat) => n + cat.items.length, 0)
 
@@ -64,7 +71,7 @@ export default function FaqPage() {
           label="All topics"
           onClick={() => setActiveCategory('all')}
         />
-        {FAQ_CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <CategoryPill
             key={cat.id}
             active={activeCategory === cat.id}

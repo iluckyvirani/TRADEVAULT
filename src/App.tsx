@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AuthGuard, { GuestGuard, RegistrationGuard } from '@/components/auth/AuthGuard'
+import AuthBootstrap from '@/components/auth/AuthBootstrap'
+import MarketBootstrap from '@/components/market/MarketBootstrap'
 import EvaluationShell from '@/components/evaluation/EvaluationShell'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageSkeleton, DashboardSkeleton } from '@/components/ui/Skeleton'
@@ -52,6 +54,8 @@ function DashboardFallback() {
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthBootstrap>
+        <MarketBootstrap />
       <ErrorBoundary label="Application error">
         <Routes>
           {/* Public */}
@@ -182,6 +186,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>
+      </AuthBootstrap>
     </BrowserRouter>
   )
 }

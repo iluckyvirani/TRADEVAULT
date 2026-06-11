@@ -249,26 +249,32 @@ Use [Neon](https://neon.tech) console → create project → copy pooled connect
 
 ### 4.2 Prisma models (summary)
 
+Last synced with `../src/` — June 2026.
+
 | Model | Maps to frontend |
 |-------|------------------|
-| `User` | `authStore` user + `registrationStep` |
-| `UserPreferences` | Profile nickname, theme, `commChannel`, `onboardingHelp` |
+| `User` | `authStore` — `AuthUser` + `registrationStep`, `startingBalance`, lockout fields |
+| `UserPreferences` | Profile tabs + `mockUser.preferences` + `instrumentStore` / `evaluationAccountStore` UI state |
+| `KillSwitchEvent` | ProfilePage Daily Kill Switch — one activation per trading day |
 | `RefreshToken` / `EmailVerificationToken` | JWT + verify email |
-| `AffiliateProfile` | `affiliateStore.profiles` — unique `code` per user |
-| `Referral` | `affiliateStore.referrals` — ₹500 commission, statuses |
+| `AffiliateProfile` | `affiliateStore.profiles` — unique `code`, `seeded` flag (DEMO123) |
+| `Referral` | `affiliateStore.referrals` — flat ₹500 commission |
 | `AffiliatePayout` | `affiliateStore.payouts` |
-| `EvaluationAccount` | `evaluationAccountStore.accounts` |
-| `EquityCurvePoint` | `EquityCurveChart` / `mockEquityCurve` |
-| `EvaluationOrder` | `evaluationTradingStore.orders` (+ TP/SL/trigger) |
+| `TradingProgram` | `mockTradingPrograms` — stages + rules JSON |
+| `EvaluationPlanTier` | `mockEvaluationPlanTiers` (plan-2L … plan-25L) |
+| `EvaluationAccount` | `mockEvaluationAccounts` — rules, labels, margin fields |
+| `EquityCurvePoint` | `mockEquityCurve` / `AccountStatsPage` chart |
+| `EvaluationOrder` | `evaluationTradingStore.orders` — TP/SL/trigger, `timeInForce`, partial fills |
 | `EvaluationPosition` | `evaluationTradingStore.positions` |
 | `TradingBasket` | `evaluationTradingStore.basketSets` |
 | `AccountTradingConfig` | `activeBasketByAccount`, `basketSizeMode` |
-| `Instrument` | `mockInstruments` master |
+| `Instrument` | `mockInstruments` — category, badge, filterTags, bid/ask, options |
+| `MarketQuote` | `portfolioStore.liveQuotes` / `mockQuotes` |
+| `MarketCandle` | `mockCandles` / `ChartPanel` OHLCV |
 | `Watchlist` / `WatchlistItem` | `instrumentStore.watchlists` |
-| `BillingRecord` | `billingStore.records` + Razorpay IDs |
-| `FeedbackSubmission` | `ContactPage` form |
-| `FaqItem` | `FaqPage` / `mockFaq` |
-| `EvaluationPlanTier` | `mockEvaluationPlanTiers` (seed data) |
+| `BillingRecord` | `billingStore.records` — `paidAt` = frontend `date`, links `planId` |
+| `FeedbackSubmission` | `ContactPage` / `mockContact` |
+| `FaqCategory` / `FaqItem` | `mockFaq` nested categories |
 
 ### 4.3 Referral fields on `User`
 
@@ -285,13 +291,34 @@ On **paid checkout webhook**: resolve code → create `Referral` row → link `B
 | `'1-Step'` / `'2-Step'` | `EvaluationStepType.STEP_1` / `STEP_2` |
 | `'Mr.'` etc. | `ProfileTitle.Mr` (with `@map("Mr.")`) |
 | `registrationStep` | `RegistrationStep` enum |
+| `OrderStatus` | `pending`, `open`, `filled`, `partially_filled`, `cancelled`, `rejected` |
+| `OrderType` | `market`, `limit`, `stop`, `stop_limit` |
+| `OrderTimeInForce` | `day`, `gtc`, `ioc`, `fok` |
+| `InstrumentCategory` | `index`, `future`, `equity`, `commodity`, `option` |
+| `InstrumentBadge` | `INDEX`, `FUT`, `EQ`, `MCX`, `CE`, `PE` |
+| `Exchange` | `NSE`, `BSE`, `MCX` |
+| `TradingStyle` | `day`, `swing`, `longterm`, `passive` (`OnboardingPage`) |
+| `ExperienceLevel` | `beginner`, `intermediate`, `advanced` |
+| `DefaultOrderType` | `mockUser.preferences.defaultOrderType` |
+
+### 4.4.1 `UserPreferences` fields (frontend mapping)
+
+| Field | Source |
+|-------|--------|
+| `nickname`, `theme`, `onboardingHelp`, `commChannel` | `ProfilePage` Preferences tab |
+| `defaultOrderType`, `confirmOrders`, `notify*` | `mockUser.preferences` |
+| `tradingStyle`, `experienceLevel`, `onboardingSymbols` | `OnboardingPage` steps 2–3 |
+| `activeAccountId` | `evaluationAccountStore.activeAccountId` |
+| `activeInstrumentId`, `activeWatchlistId` | `instrumentStore` |
+| `killSwitchActive`, `killSwitchActivatedAt` | ProfilePage Daily Kill Switch |
 
 ### 4.5 Seed script (recommended next step)
 
 Create `backend/prisma/seed.ts` to load data from `../src/lib/mock/`:
-- `EvaluationPlanTier` from `mockAssessmentPlans.ts`
+- `TradingProgram` + `EvaluationPlanTier` from `mockAssessmentPlans.ts`
 - `Instrument` rows from `mockInstruments.ts`
-- `FaqItem` from `mockFaq.ts`
+- `MarketQuote` from `mockQuotes.ts`
+- `FaqCategory` + `FaqItem` from `mockFaq.ts`
 - Demo affiliate `DEMO123`
 
 ```bash
@@ -335,7 +362,8 @@ npx prisma db seed
 | Method | Path | Maps to frontend |
 |--------|------|------------------|
 | PATCH | `/api/users/me` | Profile Personal tab — `nickname` |
-| PATCH | `/api/users/me/preferences` | Preferences tab — `theme`, `onboardingHelp`, `commChannel` |
+| PATCH | `/api/users/me/preferences` | Preferences tab — `theme`, `onboardingHelp`, `commChannel`, notifications, kill switch |
+| PATCH | `/api/users/me/trading-state` | `activeAccountId`, `activeInstrumentId`, `activeWatchlistId` |
 
 ### Referral (Profile → Refer & Earn)
 

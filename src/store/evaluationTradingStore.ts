@@ -1,8 +1,7 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { OrderSide, OrderStatus, OrderType } from '@/lib/mock/mockOrders'
 import type { Instrument } from '@/lib/mock/mockInstruments'
-import { getInstrumentById } from '@/lib/mock/mockInstruments'
+import * as tradingApi from '@/lib/api/trading'
 import { useEvaluationAccountStore } from '@/store/evaluationAccountStore'
 
 export interface EvaluationOrder {
@@ -64,506 +63,246 @@ export type BasketSizeMode = 'contracts' | 'lots'
 interface EvaluationTradingStore {
   orders: EvaluationOrder[]
   positions: EvaluationPosition[]
-  /** @deprecated Migrated to basketSets */
-  baskets?: Record<string, string[]>
   basketSets: Record<string, TradingBasket[]>
   activeBasketByAccount: Record<string, string | null>
   basketSizeMode: BasketSizeMode
-  placeOrder: (input: PlaceOrderInput) => EvaluationOrder
-  cancelOrder: (orderId: string) => void
-  tryFillPendingOrders: (symbol: string, price: number) => void
-  updatePositionLtp: (symbol: string, price: number) => void
+  tradingReady: Record<string, boolean>
+  hydrateTrading: (accountId: string) => Promise<void>
+  placeOrder: (input: PlaceOrderInput) => Promise<EvaluationOrder>
+  cancelOrder: (accountId: string, orderId: string) => Promise<void>
+  tryFillPendingOrders: (accountId: string, symbol: string, price: number) => Promise<void>
+  updatePositionLtp: (accountId: string, symbol: string, price: number) => Promise<void>
   getOrdersForAccount: (accountId: string) => EvaluationOrder[]
   getPositionsForAccount: (accountId: string) => EvaluationPosition[]
   getOpenOrdersForAccount: (accountId: string) => EvaluationOrder[]
-  createBasket: (accountId: string) => string
-  setActiveBasket: (accountId: string, basketId: string) => void
+  createBasket: (accountId: string) => Promise<string>
+  setActiveBasket: (accountId: string, basketId: string) => Promise<void>
   getBasketsForAccount: (accountId: string) => TradingBasket[]
   getActiveBasket: (accountId: string) => TradingBasket | null
-  addToBasket: (accountId: string, instrumentId: string) => void
-  removeFromBasket: (accountId: string, instrumentId: string) => void
+  addToBasket: (accountId: string, instrumentId: string) => Promise<void>
+  removeFromBasket: (accountId: string, instrumentId: string) => Promise<void>
   getBasketForAccount: (accountId: string) => string[]
-  setBasketSizeMode: (mode: BasketSizeMode) => void
-  placeBasketOrders: (accountId: string) => number
+  setBasketSizeMode: (mode: BasketSizeMode) => Promise<void>
+  placeBasketOrders: (accountId: string) => Promise<number>
 }
 
-let _nextId = 1
-
-function nextId(prefix: string) {
-  return `${prefix}-${Date.now()}-${_nextId++}`
-}
-
-function notional(price: number, lots: number, lotSize: number) {
-  return parseFloat((price * lots * lotSize).toFixed(2))
-}
-
-function syncAccountFromTrading(accountId: string) {
-  const { positions } = useEvaluationTradingStore.getState()
-  const accountPositions = positions.filter(
-    (p) => p.accountId === accountId && p.lots > 0,
-  )
-
-  const unrealizedPnL = accountPositions.reduce((s, p) => s + p.unrealizedPnL, 0)
-  const marginUsed = accountPositions.reduce(
-    (s, p) => s + p.avgEntry * p.lots * 0.1,
-    0,
-  )
-
-  const account = useEvaluationAccountStore
-    .getState()
-    .accounts.find((a) => a.id === accountId)
-  if (!account) return
-
-  const equity = account.accountSize + unrealizedPnL
-  const freeMargin = Math.max(0, account.accountSize - marginUsed)
-
-  const nextEquity = parseFloat(equity.toFixed(2))
-  const nextUnrealized = parseFloat(unrealizedPnL.toFixed(2))
-  const nextToday = parseFloat(unrealizedPnL.toFixed(2))
-  const nextMarginUsed = parseFloat(marginUsed.toFixed(2))
-  const nextFreeMargin = parseFloat(freeMargin.toFixed(2))
-
-  const unchanged =
-    account.equity === nextEquity &&
-    account.unrealizedPnL === nextUnrealized &&
-    account.todayPnL === nextToday &&
-    account.marginUsed === nextMarginUsed &&
-    account.freeMargin === nextFreeMargin
-
-  if (unchanged) return
-
-  useEvaluationAccountStore.setState((state) => ({
-    accounts: state.accounts.map((a) =>
-      a.id === accountId
-        ? {
-            ...a,
-            equity: nextEquity,
-            unrealizedPnL: nextUnrealized,
-            todayPnL: nextToday,
-            marginUsed: nextMarginUsed,
-            freeMargin: nextFreeMargin,
-            balance: a.accountSize,
-          }
-        : a,
-    ),
-  }))
-}
-
-function applyFillToState(
-  state: { positions: EvaluationPosition[] },
+function mergeAccountOrders(
+  orders: EvaluationOrder[],
   accountId: string,
-  instrument: Instrument,
-  side: OrderSide,
-  lots: number,
-  fillPrice: number,
-): EvaluationPosition[] {
-  const positions = [...state.positions]
-  const idx = positions.findIndex(
-    (p) => p.accountId === accountId && p.symbol === instrument.symbol,
-  )
-
-  if (side === 'buy') {
-    if (idx >= 0) {
-      const p = positions[idx]
-      const newLots = p.lots + lots
-      const avgEntry = (p.avgEntry * p.lots + fillPrice * lots) / newLots
-      positions[idx] = {
-        ...p,
-        lots: newLots,
-        avgEntry: parseFloat(avgEntry.toFixed(2)),
-        ltp: fillPrice,
-        unrealizedPnL: 0,
-      }
-    } else {
-      positions.push({
-        id: nextId('evpos'),
-        accountId,
-        instrumentId: instrument.id,
-        symbol: instrument.symbol,
-        name: instrument.displayName,
-        lots,
-        avgEntry: fillPrice,
-        ltp: fillPrice,
-        unrealizedPnL: 0,
-        openedAt: new Date().toISOString(),
-      })
-    }
-  } else if (idx >= 0) {
-    const p = positions[idx]
-    const newLots = p.lots - lots
-    if (newLots <= 0) {
-      positions.splice(idx, 1)
-    } else {
-      positions[idx] = {
-        ...p,
-        lots: newLots,
-        ltp: fillPrice,
-        unrealizedPnL: parseFloat(((fillPrice - p.avgEntry) * newLots).toFixed(2)),
-      }
-    }
-  }
-
-  return positions
+  next: EvaluationOrder[],
+) {
+  return [...next, ...orders.filter((o) => o.accountId !== accountId)]
 }
 
-export const useEvaluationTradingStore = create<EvaluationTradingStore>()(
-  persist(
-    (set, get) => ({
-      orders: [],
-      positions: [],
-      basketSets: {},
-      activeBasketByAccount: {},
-      basketSizeMode: 'contracts',
+function mergeAccountPositions(
+  positions: EvaluationPosition[],
+  accountId: string,
+  next: EvaluationPosition[],
+) {
+  return [...next, ...positions.filter((p) => p.accountId !== accountId)]
+}
 
-      getOrdersForAccount: (accountId) =>
-        get().orders.filter((o) => o.accountId === accountId),
-
-      getOpenOrdersForAccount: (accountId) =>
-        get().orders.filter(
-          (o) =>
-            o.accountId === accountId &&
-            (o.status === 'open' || o.status === 'pending'),
-        ),
-
-      getPositionsForAccount: (accountId) =>
-        get().positions.filter((p) => p.accountId === accountId && p.lots > 0),
-
-      getBasketsForAccount: (accountId) => get().basketSets[accountId] ?? [],
-
-      getActiveBasket: (accountId) => {
-        const activeId = get().activeBasketByAccount[accountId]
-        if (!activeId) return null
-        return get().basketSets[accountId]?.find((b) => b.id === activeId) ?? null
-      },
-
-      getBasketForAccount: (accountId) => {
-        const active = get().getActiveBasket(accountId)
-        return active?.instrumentIds ?? []
-      },
-
-      createBasket: (accountId) => {
-        const id = nextId('basket')
-        const count = (get().basketSets[accountId]?.length ?? 0) + 1
-        const basket: TradingBasket = {
-          id,
-          name: `Basket ${count}`,
-          instrumentIds: [],
-        }
-        set((state) => ({
-          basketSets: {
-            ...state.basketSets,
-            [accountId]: [...(state.basketSets[accountId] ?? []), basket],
-          },
-          activeBasketByAccount: {
-            ...state.activeBasketByAccount,
-            [accountId]: id,
-          },
-        }))
-        return id
-      },
-
-      setActiveBasket: (accountId, basketId) =>
-        set((state) => ({
-          activeBasketByAccount: {
-            ...state.activeBasketByAccount,
-            [accountId]: basketId,
-          },
-        })),
-
-      addToBasket: (accountId, instrumentId) => {
-        let activeId = get().activeBasketByAccount[accountId]
-        if (!activeId) {
-          activeId = get().createBasket(accountId)
-        }
-        set((state) => {
-          const sets = state.basketSets[accountId] ?? []
-          const idx = sets.findIndex((b) => b.id === activeId)
-          if (idx < 0) return state
-          const basket = sets[idx]
-          if (basket.instrumentIds.includes(instrumentId)) return state
-          const updated = [...sets]
-          updated[idx] = {
-            ...basket,
-            instrumentIds: [...basket.instrumentIds, instrumentId],
-          }
-          return { basketSets: { ...state.basketSets, [accountId]: updated } }
-        })
-      },
-
-      removeFromBasket: (accountId, instrumentId) =>
-        set((state) => {
-          const activeId = state.activeBasketByAccount[accountId]
-          if (!activeId) return state
-          const sets = state.basketSets[accountId] ?? []
-          const updated = sets.map((b) =>
-            b.id === activeId
-              ? {
-                  ...b,
-                  instrumentIds: b.instrumentIds.filter((x) => x !== instrumentId),
-                }
-              : b,
-          )
-          return { basketSets: { ...state.basketSets, [accountId]: updated } }
-        }),
-
-      setBasketSizeMode: (mode) => set({ basketSizeMode: mode }),
-
-      placeBasketOrders: (accountId) => {
-        const basket = get().getActiveBasket(accountId)
-        if (!basket || basket.instrumentIds.length === 0) return 0
-
-        let placed = 0
-        for (const instrumentId of basket.instrumentIds) {
-          const instrument = getInstrumentById(instrumentId)
-          if (!instrument || instrument.viewOnly) continue
-          get().placeOrder({
-            accountId,
-            instrument,
-            side: 'buy',
-            type: 'market',
-            lots: 1,
-          })
-          placed += 1
-        }
-        return placed
-      },
-
-      placeOrder: (input) => {
-        const { accountId, instrument, side, type, lots } = input
-        const price = side === 'buy' ? instrument.ask : instrument.bid
-        const lotSize = instrument.lotSize || 1
-        const total = notional(price, lots, lotSize)
-        const now = new Date().toISOString()
-        const id = nextId('evord')
-
-        const account = useEvaluationAccountStore
-          .getState()
-          .accounts.find((a) => a.id === accountId)
-
-        const rejected: EvaluationOrder = {
-          id,
-          accountId,
-          instrumentId: instrument.id,
-          symbol: instrument.symbol,
-          name: instrument.displayName,
-          side,
-          type,
-          status: 'rejected',
-          lots,
-          totalValue: total,
-          createdAt: now,
-          updatedAt: now,
-        }
-
-        if (!account) {
-          set((s) => ({ orders: [rejected, ...s.orders] }))
-          return rejected
-        }
-
-        if (side === 'buy' && total > account.freeMargin) {
-          set((s) => ({ orders: [rejected, ...s.orders] }))
-          return rejected
-        }
-
-        if (side === 'sell') {
-          const pos = get().positions.find(
-            (p) => p.accountId === accountId && p.symbol === instrument.symbol,
-          )
-          if (!pos || pos.lots < lots) {
-            set((s) => ({ orders: [rejected, ...s.orders] }))
-            return rejected
-          }
-        }
-
-        const isMarket = type === 'market'
-        const order: EvaluationOrder = {
-          id,
-          accountId,
-          instrumentId: instrument.id,
-          symbol: instrument.symbol,
-          name: instrument.displayName,
-          side,
-          type,
-          status: isMarket ? 'filled' : 'open',
-          lots,
-          limitPrice: input.limitPrice,
-          stopPrice: input.stopPrice,
-          triggerPrice: input.triggerPrice,
-          takeProfitPrice: input.takeProfitPrice,
-          stopLossPrice: input.stopLossPrice,
-          filledPrice: isMarket ? price : undefined,
-          totalValue: total,
-          createdAt: now,
-          updatedAt: now,
-          filledAt: isMarket ? now : undefined,
-        }
-
-        set((s) => {
-          let positions = s.positions
-          if (isMarket) {
-            positions = applyFillToState(
-              { positions: s.positions },
-              accountId,
-              instrument,
-              side,
-              lots,
-              price,
-            )
-          }
-          return { orders: [order, ...s.orders], positions }
-        })
-
-        if (isMarket) syncAccountFromTrading(accountId)
-        return order
-      },
-
-      cancelOrder: (orderId) =>
-        set((state) => ({
-          orders: state.orders.map((o) =>
-            o.id === orderId && o.status === 'open'
-              ? {
-                  ...o,
-                  status: 'cancelled' as OrderStatus,
-                  updatedAt: new Date().toISOString(),
-                }
-              : o,
-          ),
-        })),
-
-      tryFillPendingOrders: (symbol, price) => {
-        const state = get()
-        const fills: {
-          accountId: string
-          instrument: Instrument
-          side: OrderSide
-          lots: number
-          fillPrice: number
-        }[] = []
-
-        const updatedOrders = state.orders.map((order): EvaluationOrder => {
-          if (order.symbol !== symbol || order.status !== 'open') return order
-
-          let shouldFill = false
-          let fillPrice = price
-
-          if (order.type === 'limit' && order.limitPrice !== undefined) {
-            if (order.side === 'buy' && price <= order.limitPrice) {
-              shouldFill = true
-              fillPrice = order.limitPrice
-            } else if (order.side === 'sell' && price >= order.limitPrice) {
-              shouldFill = true
-              fillPrice = order.limitPrice
-            }
-          } else if (order.type === 'stop' && order.stopPrice !== undefined) {
-            if (order.side === 'sell' && price <= order.stopPrice) shouldFill = true
-            if (order.side === 'buy' && price >= order.stopPrice) shouldFill = true
-          }
-
-          if (!shouldFill) return order
-
-          const inst = getInstrumentById(order.instrumentId)
-          if (inst) {
-            fills.push({
-              accountId: order.accountId,
-              instrument: inst,
-              side: order.side,
-              lots: order.lots,
-              fillPrice,
-            })
-          }
-
-          const now = new Date().toISOString()
-          return {
-            ...order,
-            status: 'filled',
-            filledPrice: fillPrice,
-            totalValue: parseFloat((fillPrice * order.lots).toFixed(2)),
-            updatedAt: now,
-            filledAt: now,
-          }
-        })
-
-        if (fills.length === 0) return
-
-        set((s) => {
-          let positions = s.positions
-          for (const f of fills) {
-            positions = applyFillToState(
-              { positions },
-              f.accountId,
-              f.instrument,
-              f.side,
-              f.lots,
-              f.fillPrice,
-            )
-          }
-          return { orders: updatedOrders, positions }
-        })
-
-        const accountIds = [...new Set(fills.map((f) => f.accountId))]
-        accountIds.forEach(syncAccountFromTrading)
-      },
-
-      updatePositionLtp: (symbol, price) => {
-        let changed = false
-        set((state) => {
-          const positions = state.positions.map((p) => {
-            if (p.symbol !== symbol) return p
-            const nextUnrealized = parseFloat(((price - p.avgEntry) * p.lots).toFixed(2))
-            if (p.ltp === price && p.unrealizedPnL === nextUnrealized) return p
-            changed = true
-            return {
-              ...p,
-              ltp: price,
-              unrealizedPnL: nextUnrealized,
-            }
-          })
-          return changed ? { positions } : state
-        })
-
-        if (!changed) return
-
-        const accountIds = new Set(
-          get()
-            .positions.filter((p) => p.symbol === symbol)
-            .map((p) => p.accountId),
-        )
-        accountIds.forEach(syncAccountFromTrading)
-      },
-    }),
-    {
-      name: 'tv-evaluation-trading',
-      partialize: (state) => ({
-        orders: state.orders,
-        positions: state.positions,
-        basketSets: state.basketSets,
-        activeBasketByAccount: state.activeBasketByAccount,
-        basketSizeMode: state.basketSizeMode,
-      }),
-      merge: (persisted, current) => {
-        const p = persisted as Partial<EvaluationTradingStore> | undefined
-        const legacy = p?.baskets
-        let basketSets = p?.basketSets ?? current.basketSets
-        let activeBasketByAccount = p?.activeBasketByAccount ?? current.activeBasketByAccount
-
-        if (legacy && Object.keys(legacy).length > 0 && Object.keys(basketSets).length === 0) {
-          basketSets = {}
-          activeBasketByAccount = {}
-          for (const [accountId, ids] of Object.entries(legacy)) {
-            if (!ids.length) continue
-            const id = `basket-migrated-${accountId}`
-            basketSets[accountId] = [{ id, name: 'Basket 1', instrumentIds: ids }]
-            activeBasketByAccount[accountId] = id
-          }
-        }
-
-        return {
-          ...current,
-          ...p,
-          basketSets,
-          activeBasketByAccount,
-        }
-      },
+function applyBasketState(
+  state: EvaluationTradingStore,
+  accountId: string,
+  data: {
+    baskets: TradingBasket[]
+    activeBasketId: string | null
+    basketSizeMode: BasketSizeMode
+  },
+) {
+  return {
+    basketSets: { ...state.basketSets, [accountId]: data.baskets },
+    activeBasketByAccount: {
+      ...state.activeBasketByAccount,
+      [accountId]: data.activeBasketId,
     },
-  ),
-)
+    basketSizeMode: data.basketSizeMode,
+  }
+}
+
+async function persistBaskets(accountId: string) {
+  const state = useEvaluationTradingStore.getState()
+  const baskets = state.basketSets[accountId] ?? []
+  const activeBasketId = state.activeBasketByAccount[accountId] ?? null
+  const data = await tradingApi.saveBaskets(accountId, {
+    baskets,
+    activeBasketId,
+    basketSizeMode: state.basketSizeMode,
+  })
+  useEvaluationTradingStore.setState((s) => applyBasketState(s, accountId, data))
+}
+
+export const useEvaluationTradingStore = create<EvaluationTradingStore>()((set, get) => ({
+  orders: [],
+  positions: [],
+  basketSets: {},
+  activeBasketByAccount: {},
+  basketSizeMode: 'lots',
+  tradingReady: {},
+
+  hydrateTrading: async (accountId) => {
+    try {
+      const data = await tradingApi.fetchTradingState(accountId)
+      set((state) => ({
+        orders: mergeAccountOrders(state.orders, accountId, data.orders),
+        positions: mergeAccountPositions(state.positions, accountId, data.positions),
+        ...applyBasketState(state, accountId, data),
+        tradingReady: { ...state.tradingReady, [accountId]: true },
+      }))
+    } catch {
+      set((state) => ({
+        tradingReady: { ...state.tradingReady, [accountId]: true },
+      }))
+    }
+  },
+
+  getOrdersForAccount: (accountId) =>
+    get().orders.filter((o) => o.accountId === accountId),
+
+  getOpenOrdersForAccount: (accountId) =>
+    get().orders.filter(
+      (o) =>
+        o.accountId === accountId &&
+        (o.status === 'open' || o.status === 'pending'),
+    ),
+
+  getPositionsForAccount: (accountId) =>
+    get().positions.filter((p) => p.accountId === accountId && p.lots > 0),
+
+  getBasketsForAccount: (accountId) => get().basketSets[accountId] ?? [],
+
+  getActiveBasket: (accountId) => {
+    const activeId = get().activeBasketByAccount[accountId]
+    if (!activeId) return null
+    return get().basketSets[accountId]?.find((b) => b.id === activeId) ?? null
+  },
+
+  getBasketForAccount: (accountId) => {
+    const active = get().getActiveBasket(accountId)
+    return active?.instrumentIds ?? []
+  },
+
+  createBasket: async (accountId) => {
+    const data = await tradingApi.createBasket(accountId)
+    set((state) => applyBasketState(state, accountId, data))
+    return data.activeBasketId ?? data.baskets[data.baskets.length - 1]?.id ?? ''
+  },
+
+  setActiveBasket: async (accountId, basketId) => {
+    const data = await tradingApi.setActiveBasketApi(accountId, basketId)
+    set((state) => applyBasketState(state, accountId, data))
+  },
+
+  addToBasket: async (accountId, instrumentId) => {
+    let activeId = get().activeBasketByAccount[accountId]
+    if (!activeId) {
+      activeId = await get().createBasket(accountId)
+    }
+
+    set((state) => {
+      const sets = state.basketSets[accountId] ?? []
+      const idx = sets.findIndex((b) => b.id === activeId)
+      if (idx < 0) return state
+      const basket = sets[idx]
+      if (basket.instrumentIds.includes(instrumentId)) return state
+      const updated = [...sets]
+      updated[idx] = {
+        ...basket,
+        instrumentIds: [...basket.instrumentIds, instrumentId],
+      }
+      return { basketSets: { ...state.basketSets, [accountId]: updated } }
+    })
+
+    await persistBaskets(accountId)
+  },
+
+  removeFromBasket: async (accountId, instrumentId) => {
+    const activeId = get().activeBasketByAccount[accountId]
+    if (!activeId) return
+
+    set((state) => {
+      const sets = state.basketSets[accountId] ?? []
+      const updated = sets.map((b) =>
+        b.id === activeId
+          ? {
+              ...b,
+              instrumentIds: b.instrumentIds.filter((x) => x !== instrumentId),
+            }
+          : b,
+      )
+      return { basketSets: { ...state.basketSets, [accountId]: updated } }
+    })
+
+    await persistBaskets(accountId)
+  },
+
+  setBasketSizeMode: async (mode) => {
+    set({ basketSizeMode: mode })
+    const accountId = useEvaluationAccountStore.getState().activeAccountId
+    if (!accountId) return
+    const data = await tradingApi.setBasketSizeModeApi(accountId, mode)
+    set((state) => applyBasketState(state, accountId, data))
+  },
+
+  placeBasketOrders: async (accountId) => {
+    const result = await tradingApi.placeBasketOrders(accountId)
+    if (result.account) {
+      useEvaluationAccountStore.getState().upsertAccount(result.account)
+    }
+    await get().hydrateTrading(accountId)
+    return result.placed
+  },
+
+  placeOrder: async (input) => {
+    const orderType =
+      input.type === 'stop_limit' ? 'stop' : input.type
+
+    const { order, account, positions } = await tradingApi.placeOrder(input.accountId, {
+      instrumentId: input.instrument.id,
+      side: input.side,
+      type: orderType,
+      lots: input.lots,
+      limitPrice: input.limitPrice,
+      stopPrice: input.stopPrice,
+      triggerPrice: input.triggerPrice,
+      takeProfitPrice: input.takeProfitPrice,
+      stopLossPrice: input.stopLossPrice,
+    })
+
+    set((state) => ({
+      orders: [order, ...state.orders.filter((o) => o.id !== order.id)],
+      positions: positions
+        ? mergeAccountPositions(state.positions, input.accountId, positions)
+        : state.positions,
+    }))
+
+    if (account) {
+      useEvaluationAccountStore.getState().upsertAccount(account)
+    }
+
+    return order
+  },
+
+  cancelOrder: async (accountId, orderId) => {
+    const { order } = await tradingApi.cancelOrder(accountId, orderId)
+    set((state) => ({
+      orders: state.orders.map((o) => (o.id === orderId ? order : o)),
+    }))
+  },
+
+  tryFillPendingOrders: async (accountId, symbol, price) => {
+    const result = await tradingApi.syncQuote(accountId, symbol, price)
+    set((state) => ({
+      orders: mergeAccountOrders(state.orders, accountId, result.orders),
+      positions: mergeAccountPositions(state.positions, accountId, result.positions),
+    }))
+    if (result.account) {
+      useEvaluationAccountStore.getState().upsertAccount(result.account)
+    }
+  },
+
+  updatePositionLtp: async (accountId, symbol, price) => {
+    await get().tryFillPendingOrders(accountId, symbol, price)
+  },
+}))

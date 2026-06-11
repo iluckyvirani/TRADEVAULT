@@ -6,7 +6,11 @@ import AuthLayout from '@/components/auth/AuthLayout'
 import AuthTabSwitcher, { type AuthTab } from '@/components/auth/AuthTabSwitcher'
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton'
 import { useAuthStore } from '@/store/authStore'
+import { useEvaluationAccountStore } from '@/store/evaluationAccountStore'
 import { useCheckoutStore } from '@/store/checkoutStore'
+import { ApiError } from '@/lib/api/client'
+import * as authApi from '@/lib/api/auth'
+import { navigateAfterAuth } from '@/lib/api/navigateAfterAuth'
 import { cn } from '@/lib/utils'
 
 export default function AuthPage() {
@@ -14,8 +18,7 @@ export default function AuthPage() {
   const [searchParams] = useSearchParams()
   const initialTab = searchParams.get('tab') === 'signin' ? 'signin' : 'create'
 
-  const register = useAuthStore((s) => s.register)
-  const signIn = useAuthStore((s) => s.signIn)
+  const setSession = useAuthStore((s) => s.setSession)
   const affiliateCode = useCheckoutStore((s) => s.affiliateCode)
   const setAffiliateCode = useCheckoutStore((s) => s.setAffiliateCode)
 
@@ -47,18 +50,34 @@ export default function AuthPage() {
     }
 
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 400))
-
-    if (tab === 'create') {
-      register(email)
-      const ref = searchParams.get('ref')
-      const next = ref
-        ? `/auth/complete-profile?ref=${encodeURIComponent(ref)}`
-        : '/auth/complete-profile'
-      navigate(next, { replace: true })
-    } else {
-      signIn(email)
-      navigate('/auth/loading', { replace: true })
+    try {
+      if (tab === 'create') {
+        const session = await authApi.register({ email, password })
+        setSession(session)
+        const ref = searchParams.get('ref') ?? undefined
+        navigateAfterAuth(navigate, session.registrationStep, { ref })
+      } else {
+        const session = await authApi.login({ email, password })
+        setSession(session)
+        if (
+          session.registrationStep === 'email_verified' ||
+          session.registrationStep === 'evaluation_started'
+        ) {
+          await useEvaluationAccountStore.getState().hydrateAccounts()
+        }
+        navigateAfterAuth(navigate, session.registrationStep)
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message)
+        if (err.code === 'ACCOUNT_LOCKED') {
+          useAuthStore.getState().recordFailedAttempt()
+        }
+      } else {
+        setError('Something went wrong. Is the API server running?')
+      }
+    } finally {
+      setLoading(false)
     }
   }
 

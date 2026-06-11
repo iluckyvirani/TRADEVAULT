@@ -24,15 +24,10 @@ export type {
 } from './mockInstruments'
 
 export {
-  mockTradingPrograms,
   mockEvaluationPlanTiers,
   getPlanById,
 } from './mockAssessmentPlans'
-export type {
-  TradingProgram,
-  EvaluationPlanTier,
-  ProgramType,
-} from './mockAssessmentPlans'
+export type { EvaluationPlanTier } from './mockAssessmentPlans'
 
 export { buildMockEquityCurve } from './mockEquityCurve'
 export type { EquityPoint } from './mockEquityCurve'

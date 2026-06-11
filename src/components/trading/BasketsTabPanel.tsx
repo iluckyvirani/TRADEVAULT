@@ -55,17 +55,17 @@ export default function BasketsTabPanel({
 
   const canPlace = marginAvailable
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!activeBasket) {
-      createBasket(accountId)
+      await createBasket(accountId)
     }
-    addToBasket(accountId, activeInstrumentId)
+    await addToBasket(accountId, activeInstrumentId)
   }
 
-  function handlePlace() {
-    const count = placeBasketOrders(accountId)
+  async function handlePlace() {
+    const count = await placeBasketOrders(accountId)
     if (count > 0) {
-      showToast(`Placed ${count} basket order${count === 1 ? '' : 's'} (mock)`)
+      showToast(`Placed ${count} basket order${count === 1 ? '' : 's'}`)
     } else {
       showToast('No tradable instruments in basket')
     }
@@ -76,7 +76,7 @@ export default function BasketsTabPanel({
       <div className={cn('space-y-2 border-b px-2 py-2', t.border)}>
         <button
           type="button"
-          onClick={() => createBasket(accountId)}
+          onClick={() => void createBasket(accountId)}
           className={cn(
             'w-full rounded-lg border border-dashed py-2 text-xs font-medium transition-colors',
             t.dashedBtn,
@@ -93,7 +93,7 @@ export default function BasketsTabPanel({
                 <button
                   key={b.id}
                   type="button"
-                  onClick={() => setActiveBasket(accountId, b.id)}
+                  onClick={() => void setActiveBasket(accountId, b.id)}
                   className={cn(
                     'rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors',
                     active ? t.pillActive : t.pillInactive,
@@ -118,7 +118,7 @@ export default function BasketsTabPanel({
               <button
                 key={mode}
                 type="button"
-                onClick={() => setBasketSizeMode(mode)}
+                onClick={() => void setBasketSizeMode(mode)}
                 className={cn(
                   'rounded-full px-2.5 py-0.5 text-[10px] font-medium capitalize transition-colors',
                   sizeMode === mode

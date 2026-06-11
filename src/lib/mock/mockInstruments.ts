@@ -213,12 +213,31 @@ export function getDefaultTradableInstrument(): Instrument {
   )
 }
 
+let apiInstrumentMap: Map<string, Instrument> | null = null
+let apiInstrumentList: Instrument[] | null = null
+
+export function setApiInstruments(list: Instrument[]) {
+  apiInstrumentList = list
+  apiInstrumentMap = new Map(list.map((i) => [i.id, i]))
+}
+
+export function getApiInstruments(): Instrument[] | null {
+  return apiInstrumentList
+}
+
 export function getInstrumentById(id: string): Instrument | undefined {
-  return mockInstruments.find((i) => i.id === id) ?? resolveOptionById(id)
+  return (
+    apiInstrumentMap?.get(id) ??
+    mockInstruments.find((i) => i.id === id) ??
+    resolveOptionById(id)
+  )
 }
 
 export function getInstrumentBySymbol(symbol: string): Instrument | undefined {
-  return mockInstruments.find((i) => i.symbol === symbol)
+  return (
+    apiInstrumentList?.find((i) => i.symbol === symbol) ??
+    mockInstruments.find((i) => i.symbol === symbol)
+  )
 }
 
 export function getChartSymbol(instrument: Instrument): string {

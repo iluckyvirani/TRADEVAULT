@@ -1,4 +1,5 @@
 import type { EvaluationAccount } from '@/lib/mock/mockEvaluationAccounts'
+import { DEFAULT_EVALUATION_OBJECTIVES, OBJECTIVE_LABELS } from '@/lib/plans/objectives'
 import {
   calcAvgLoss,
   calcAvgWin,
@@ -31,30 +32,59 @@ export function buildObjectives(account: EvaluationAccount): TradingObjectiveRow
   const dailyPct = account.dailyMaxLoss > 0 ? (dailyUsed / account.dailyMaxLoss) * 100 : 0
   const maxPct = account.maxLoss > 0 ? (maxUsed / account.maxLoss) * 100 : 0
 
+  const profitTargetPassed = profit >= account.profitTarget
+  const maxLossPassed = maxUsed < account.maxLoss
+  const dailyLossPassed = dailyUsed < account.dailyMaxLoss
+  const tradingDaysPassed = account.tradingDaysCompleted >= account.minTradingDays
+  const profitableDaysPassed =
+    account.profitableTradingDaysCompleted >= account.minProfitableTradingDays
+
+  const rewardText =
+    account.reward ?? DEFAULT_EVALUATION_OBJECTIVES.reward
+
+  const allPassed =
+    profitTargetPassed &&
+    maxLossPassed &&
+    dailyLossPassed &&
+    tradingDaysPassed &&
+    profitableDaysPassed
+
   return [
     {
-      id: 'days',
-      label: `Minimum ${account.minTradingDays} Trading Days`,
-      result: String(account.tradingDaysCompleted),
-      passed: account.tradingDaysCompleted >= account.minTradingDays,
-    },
-    {
-      id: 'daily',
-      label: `Max Daily Loss -₹${account.dailyMaxLoss.toLocaleString('en-IN')}`,
-      result: `₹${dailyUsed.toLocaleString('en-IN')} (${dailyPct.toFixed(0)}%)`,
-      passed: dailyUsed < account.dailyMaxLoss,
+      id: 'profit',
+      label: OBJECTIVE_LABELS.profitTarget,
+      result: `₹${profit.toLocaleString('en-IN')} (${profitPct.toFixed(0)}%)`,
+      passed: profitTargetPassed,
     },
     {
       id: 'max',
-      label: `Max Loss -₹${account.maxLoss.toLocaleString('en-IN')}`,
+      label: OBJECTIVE_LABELS.maximumLossLimit,
       result: `₹${maxUsed.toLocaleString('en-IN')} (${maxPct.toFixed(0)}%)`,
-      passed: maxUsed < account.maxLoss,
+      passed: maxLossPassed,
     },
     {
-      id: 'profit',
-      label: `Profit Target ₹${account.profitTarget.toLocaleString('en-IN')}`,
-      result: `₹${profit.toLocaleString('en-IN')} (${profitPct.toFixed(0)}%)`,
-      passed: profit >= account.profitTarget,
+      id: 'daily',
+      label: OBJECTIVE_LABELS.maximumDailyLossLimit,
+      result: `₹${dailyUsed.toLocaleString('en-IN')} (${dailyPct.toFixed(0)}%)`,
+      passed: dailyLossPassed,
+    },
+    {
+      id: 'days',
+      label: OBJECTIVE_LABELS.requiredTradingDays,
+      result: `${account.tradingDaysCompleted} / ${account.minTradingDays}`,
+      passed: tradingDaysPassed,
+    },
+    {
+      id: 'profitable-days',
+      label: OBJECTIVE_LABELS.minimumProfitableTradingDays,
+      result: `${account.profitableTradingDaysCompleted} / ${account.minProfitableTradingDays}`,
+      passed: profitableDaysPassed,
+    },
+    {
+      id: 'reward',
+      label: OBJECTIVE_LABELS.reward,
+      result: allPassed ? rewardText : 'Locked until objectives met',
+      passed: allPassed,
     },
   ]
 }

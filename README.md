@@ -6,25 +6,31 @@ Prop-firm **evaluation platform** for Indian markets.
 
 | Path | Purpose |
 |------|---------|
-| **`src/`** | React + Vite **frontend** (mock data today) |
-| **`backend/`** | Node API, **Prisma**, Neon PostgreSQL, backend docs |
+| **`src/`** | React + Vite **frontend** (auth wired to API; trading still mock) |
+| **`backend/`** | Express API, **Prisma**, Neon PostgreSQL, backend docs |
 
-## Quick start (frontend)
+## Quick start (full stack)
+
+**Terminal 1 — API**
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+# Set DATABASE_URL (Neon or local Postgres)
+npm run db:generate
+npm run db:push
+npm run dev
+```
+
+**Terminal 2 — frontend**
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Quick start (backend / database)
-
-```bash
-cd backend
-npm install
-cp .env.example .env
-npm run db:generate
-npm run db:migrate
-```
+Vite proxies `/api` → `http://localhost:4000`. Auth pages call the real backend.
 
 ## Documentation
 
@@ -38,4 +44,4 @@ npm run db:migrate
 
 **Frontend:** React 19, TypeScript, Vite 8, Tailwind, Zustand, lightweight-charts, recharts  
 
-**Backend (planned):** Express + Prisma 6 + Neon PostgreSQL — see `backend/`
+**Backend:** Express 5 + Prisma 6 + Neon PostgreSQL — auth APIs live in `backend/src/`

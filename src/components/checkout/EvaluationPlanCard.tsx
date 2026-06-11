@@ -1,22 +1,15 @@
 import { Check } from 'lucide-react'
-import type { EvaluationPlanTier, TradingProgram } from '@/lib/mock/mockAssessmentPlans'
+import type { EvaluationPlanTier } from '@/lib/mock/mockAssessmentPlans'
+import { objectivesToRows } from '@/lib/plans/objectives'
 import { cn, formatCurrencyWhole } from '@/lib/utils'
 
 interface Props {
   plan: EvaluationPlanTier
-  program: TradingProgram
   selected: boolean
-  showObjectives: boolean
   onSelect: () => void
 }
 
-export default function EvaluationPlanCard({
-  plan,
-  program,
-  selected,
-  showObjectives,
-  onSelect,
-}: Props) {
+export default function EvaluationPlanCard({ plan, selected, onSelect }: Props) {
   const balanceLabel = `${plan.balance / 100_000}L`
 
   return (
@@ -41,56 +34,31 @@ export default function EvaluationPlanCard({
         </span>
       )}
 
-      <p className="text-xs font-semibold uppercase tracking-wider opacity-80">{program.title}</p>
-      <p className={cn('text-[11px]', selected ? 'text-blue-100' : 'text-muted-foreground')}>
-        {program.subtitle}
-      </p>
+      <p className="text-xs font-semibold uppercase tracking-wider opacity-80">Account size</p>
       <p className="mt-2 text-2xl font-bold">{balanceLabel}</p>
       <p className={cn('mt-1 text-sm', selected ? 'text-blue-100' : 'text-muted-foreground')}>
         {formatCurrencyWhole(plan.balance)}
       </p>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {program.stages.map((stage, i) => (
-          <span key={stage} className="flex items-center gap-1.5">
-            <span
-              className={cn(
-                'rounded-full px-2.5 py-0.5 text-[10px] font-medium',
-                selected ? 'bg-white/20 text-white' : 'bg-muted text-foreground',
-              )}
-            >
-              {stage}
-            </span>
-            {i < program.stages.length - 1 && (
-              <span className={cn('text-[10px]', selected ? 'text-blue-200' : 'text-muted-foreground')}>
-                →
-              </span>
+      <ul
+        className={cn(
+          'mt-4 space-y-1.5 border-t pt-3',
+          selected ? 'border-white/20' : 'border-border',
+        )}
+      >
+        {objectivesToRows(plan.objectives).map((row) => (
+          <li
+            key={row.label}
+            className={cn(
+              'flex justify-between gap-2 text-[10px]',
+              selected ? 'text-blue-50' : 'text-muted-foreground',
             )}
-          </span>
+          >
+            <span>{row.label}</span>
+            <span className="font-medium">{row.value}</span>
+          </li>
         ))}
-      </div>
-
-      {showObjectives && (
-        <ul
-          className={cn(
-            'mt-3 space-y-1 border-t pt-3',
-            selected ? 'border-white/20' : 'border-border',
-          )}
-        >
-          {program.rules.map((rule) => (
-            <li
-              key={rule.label}
-              className={cn(
-                'flex justify-between gap-2 text-[10px]',
-                selected ? 'text-blue-50' : 'text-muted-foreground',
-              )}
-            >
-              <span>{rule.label}</span>
-              <span className="font-medium">{rule.value}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      </ul>
 
       <p className={cn('mt-4 text-lg font-semibold', selected ? 'text-white' : 'text-foreground')}>
         ₹ {plan.evaluationFee.toLocaleString('en-IN')}

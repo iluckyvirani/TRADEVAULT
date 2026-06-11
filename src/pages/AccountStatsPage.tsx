@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   Check,
@@ -31,6 +31,11 @@ export default function AccountStatsPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const allOrders = useEvaluationTradingStore((s) => s.orders)
   const allPositions = useEvaluationTradingStore((s) => s.positions)
+  const hydrateTrading = useEvaluationTradingStore((s) => s.hydrateTrading)
+
+  useEffect(() => {
+    if (accountId) void hydrateTrading(accountId)
+  }, [accountId, hydrateTrading])
 
   if (!account) {
     return (

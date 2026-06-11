@@ -6,6 +6,8 @@ import AuthLayout from '@/components/auth/AuthLayout'
 import { useAuthStore, type ProfileTitle } from '@/store/authStore'
 import { useAffiliateStore } from '@/store/affiliateStore'
 import { useCheckoutStore } from '@/store/checkoutStore'
+import { ApiError } from '@/lib/api/client'
+import * as authApi from '@/lib/api/auth'
 import { cn } from '@/lib/utils'
 
 const TITLES: ProfileTitle[] = ['Mr.', 'Ms.', 'Mrs.', 'Dr.']
@@ -14,7 +16,7 @@ export default function CompleteProfilePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const user = useAuthStore((s) => s.user)
-  const completeProfile = useAuthStore((s) => s.completeProfile)
+  const setSession = useAuthStore((s) => s.setSession)
   const affiliateCode = useCheckoutStore((s) => s.affiliateCode)
   const setAffiliateCode = useCheckoutStore((s) => s.setAffiliateCode)
   const validateCode = useAffiliateStore((s) => s.validateCode)
@@ -24,6 +26,7 @@ export default function CompleteProfilePage() {
   const [phone, setPhone] = useState('')
   const [onboardingHelp, setOnboardingHelp] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [codeHint, setCodeHint] = useState<{ valid: boolean; message: string } | null>(null)
 
   useEffect(() => {
@@ -49,15 +52,22 @@ export default function CompleteProfilePage() {
     if (fullName.trim().length < 2) return
 
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 400))
-
-    completeProfile({
-      title,
-      fullName: fullName.trim(),
-      phone: phone.trim() || '+91',
-      onboardingHelp,
-    })
-    navigate('/auth/verify-email', { replace: true })
+    setError('')
+    try {
+      const session = await authApi.completeProfile({
+        title,
+        fullName: fullName.trim(),
+        phone: phone.trim() || '+91',
+        onboardingHelp,
+        affiliateCode: affiliateCode.trim() || undefined,
+      })
+      setSession(session)
+      navigate('/auth/verify-email', { replace: true })
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to save profile')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -174,6 +184,8 @@ export default function CompleteProfilePage() {
             </div>
           </label>
         </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"

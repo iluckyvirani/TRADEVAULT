@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Area,
   Line,
@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { fetchEquityCurve } from '@/lib/api/accounts'
 import { buildMockEquityCurve } from '@/lib/mock/mockEquityCurve'
 import type { EvaluationAccount } from '@/lib/mock/mockEvaluationAccounts'
 import { formatCurrency } from '@/lib/utils'
@@ -20,9 +21,25 @@ interface Props {
 export default function EquityCurveChart({ account }: Props) {
   const [mode, setMode] = useState<'absolute' | 'percent'>('absolute')
   const [showObjectives, setShowObjectives] = useState(true)
+  const [apiPoints, setApiPoints] = useState<ReturnType<typeof buildMockEquityCurve> | null>(
+    null,
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    fetchEquityCurve(account.id)
+      .then((res) => {
+        if (!cancelled && res.points.length > 0) setApiPoints(res.points)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [account.id])
 
   const data = useMemo(() => {
-    const points = buildMockEquityCurve(account.id, account.accountSize)
+    const points =
+      apiPoints ?? buildMockEquityCurve(account.id, account.accountSize)
     const base = account.accountSize
     return points.map((p) => {
       const d = new Date(p.timestamp)
@@ -32,7 +49,7 @@ export default function EquityCurveChart({ account }: Props) {
         pct: base > 0 ? ((p.equity - base) / base) * 100 : 0,
       }
     })
-  }, [account.id, account.accountSize])
+  }, [account.id, account.accountSize, apiPoints])
 
   const targetLine = account.accountSize + account.profitTarget
   const breachLine = account.accountSize - account.dailyMaxLoss
@@ -54,18 +71,20 @@ export default function EquityCurveChart({ account }: Props) {
                 type="button"
                 onClick={() => setMode(m)}
                 className={cn(
-                  'rounded-md px-2 py-1 text-xs font-medium',
-                  mode === m ? 'bg-foreground text-background' : 'text-muted-foreground',
+                  'rounded-md px-2.5 py-1 text-[10px] font-medium capitalize',
+                  mode === m ? 'bg-[#002D5B] text-white' : 'text-muted-foreground',
                 )}
               >
-                {m === 'absolute' ? '₹ Absolute' : '% Change'}
+                {m}
               </button>
             ))}
           </div>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            OBJECTIVES
+          <label className="flex cursor-pointer items-center gap-2 text-[10px] text-muted-foreground">
+            <span>Objectives</span>
             <button
               type="button"
+              role="switch"
+              aria-checked={showObjectives}
               onClick={() => setShowObjectives((v) => !v)}
               className={cn(
                 'relative h-5 w-9 rounded-full transition-colors',
@@ -80,69 +99,66 @@ export default function EquityCurveChart({ account }: Props) {
               />
             </button>
           </label>
-          <button
-            type="button"
-            className="rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            Reset View
-          </button>
         </div>
       </div>
 
-      <div className="mt-4 h-56">
+      <div className="mt-4 h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <XAxis dataKey="label" tick={{ fill: '#9ca3af', fontSize: 10 }} />
+            <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="currentColor" opacity={0.5} />
             <YAxis
-              tick={{ fill: '#9ca3af', fontSize: 10 }}
+              tick={{ fontSize: 10 }}
+              stroke="currentColor"
+              opacity={0.5}
               tickFormatter={(v) =>
-                mode === 'absolute'
-                  ? `₹${(v / 100000).toFixed(0)}L`
-                  : `${Number(v).toFixed(1)}%`
+                mode === 'percent' ? `${v.toFixed(1)}%` : formatCurrency(v)
               }
             />
             <Tooltip
-              contentStyle={{
-                background: '#ffffff',
-                border: '1px solid #e5e7eb',
-                borderRadius: 8,
-                fontSize: 12,
+              formatter={(v) => {
+                const n = typeof v === 'number' ? v : Number(v ?? 0)
+                return mode === 'percent' ? `${n.toFixed(2)}%` : formatCurrency(n)
               }}
-              formatter={(value) =>
-                mode === 'absolute'
-                  ? formatCurrency(Number(value))
-                  : `${Number(value).toFixed(2)}%`
-              }
             />
-            {mode === 'absolute' && showObjectives && (
+            {mode === 'absolute' ? (
               <>
                 <Area
                   type="monotone"
-                  dataKey={() => targetLine}
-                  stroke="#dc2626"
-                  fill="#fee2e2"
-                  fillOpacity={0.5}
-                  dot={false}
-                  isAnimationActive={false}
+                  dataKey="equity"
+                  stroke="#002D5B"
+                  fill="#002D5B22"
+                  strokeWidth={2}
                 />
-                <Line
-                  type="monotone"
-                  dataKey={() => breachLine}
-                  stroke="#dc2626"
-                  strokeDasharray="3 3"
-                  strokeWidth={1}
-                  dot={false}
-                  isAnimationActive={false}
-                />
+                {showObjectives && (
+                  <>
+                    <Line
+                      type="monotone"
+                      dataKey={() => targetLine}
+                      stroke="#22c55e"
+                      strokeDasharray="4 4"
+                      dot={false}
+                      name="Profit target"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey={() => breachLine}
+                      stroke="#ef4444"
+                      strokeDasharray="4 4"
+                      dot={false}
+                      name="Daily loss limit"
+                    />
+                  </>
+                )}
               </>
+            ) : (
+              <Area
+                type="monotone"
+                dataKey="pct"
+                stroke="#002D5B"
+                fill="#002D5B22"
+                strokeWidth={2}
+              />
             )}
-            <Line
-              type="monotone"
-              dataKey={mode === 'absolute' ? 'equity' : 'pct'}
-              stroke="#dc2626"
-              strokeWidth={2}
-              dot={false}
-            />
           </LineChart>
         </ResponsiveContainer>
       </div>
